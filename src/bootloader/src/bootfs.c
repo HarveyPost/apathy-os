@@ -52,3 +52,27 @@ EFI_STATUS bootfs_open_root(
         root
     );
 }
+
+EFI_STATUS bootfs_open_readonly(
+    EFI_FILE_PROTOCOL *root,
+    CHAR16 *path,
+    EFI_FILE_PROTOCOL **file
+) {
+    *file = NULL;
+    
+    /* root -> Directory from which to open the file
+    *  file -> Where firmware writes the new handle
+    *  path -> Filename or path
+    *  EFI_FILE_MODE_READ -> open for reading
+    *  0 -> Attributes are unused when opening an existing file
+    * Open() gives us access to the file; readings its contents is a separate operation. */
+    return uefi_call_wrapper(
+        root->Open,
+        5,
+        root,
+        file,
+        path,
+        EFI_FILE_MODE_READ,
+        0
+    );
+}
