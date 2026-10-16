@@ -1,0 +1,20 @@
+# Compiled files
+*.o
+*.d
+*.efi
+*.EFI
+
+# Disk images and local firmware
+*.img
+*.iso
+*.fd
+
+# Downloaded GNU-EFI source
+/gnu-efi/
+
+# clangd cache and editor swap files
+/.cache/
+*.swp
+*.swo
+
+*.clangd
