@@ -36,4 +36,10 @@ EFI_STATUS bootfs_read(
     UINTN *size
 );
 
+/* Use UEFI's GetInfo() operation to obtain an EFI_FILE_INFO structure, then extract its FileSize field. */
+EFI_STATUS bootfs_get_size(
+    EFI_FILE_PROTOCOL *file,
+    UINT64 *size
+);
+
 #endif

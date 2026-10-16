@@ -90,3 +90,57 @@ EFI_STATUS bootfs_read(
         buffer
     );
 }
+
+EFI_STATUS bootfs_get_size(
+    EFI_FILE_PROTOCOL *file,
+    UINT64 *size
+) {
+    EFI_STATUS status;
+    UINTN info_size = 0;
+    EFI_FILE_INFO *info;
+
+    if (file == NULL || size == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    *size = 0;
+
+    /* Ask how much memory the metadata needs. */
+    status = uefi_call_wrapper(
+        file->GetInfo,
+        4,
+        file,
+        &GenericFileInfo,
+        &info_size,
+        NULL
+    );
+
+    /* This is the expected result when supplying no buffer. */
+    if (status != EFI_BUFFER_TOO_SMALL) {
+        if (EFI_ERROR(status))
+            return status;
+        
+        return EFI_DEVICE_ERROR;
+    }
+
+    info = AllocatePool(info_size);
+
+    if (info == NULL)
+        return EFI_OUT_OF_RESOURCES;
+
+    /* Retrieve the metadata into the allocated buffer. */
+    status = uefi_call_wrapper(
+        file->GetInfo,
+        4,
+        file,
+        &GenericFileInfo,
+        &info_size,
+        info
+    );
+
+    if (!EFI_ERROR(status))
+        *size = info->FileSize;
+    
+    FreePool(info);
+
+    return status;
+}

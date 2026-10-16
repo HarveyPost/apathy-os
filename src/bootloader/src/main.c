@@ -20,6 +20,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     CHAR8 buffer[128];
     UINTN bytes_read;
     UINT64 total_read = 0;
+    UINT64 file_size;
 
     InitializeLib(ImageHandle, SystemTable);
 
@@ -36,6 +37,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
         if (!EFI_ERROR(status)) {
             Print(L"test.txt opened successfully.\n");
+
+            status = bootfs_get_size(file, &file_size);
+
+            if (!EFI_ERROR(status))
+                Print(L"File size: %lu bytes.\n", file_size);
 
             Print(L"Contents:\n");
             
@@ -60,7 +66,19 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         
             if (!EFI_ERROR(status))
                     Print(L"Read %lu bytes in total.\n", total_read);
+
+            /* Close the file even if reading failed. */
+            close_status = uefi_call_wrapper(file->Close, 1, file);
+
+            if (!EFI_ERROR(status))
+                status = close_status;
         }
+
+        /* Close the file even if reading failed. */
+        close_status = uefi_call_wrapper(file->Close, 1, file);
+
+        if (!EFI_ERROR(status))
+            status = close_status;
 
         /* Close the directory even if opening the file failed. */
         close_status = uefi_call_wrapper(root->Close, 1, root);
