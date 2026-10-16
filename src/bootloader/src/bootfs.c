@@ -144,3 +144,73 @@ EFI_STATUS bootfs_get_size(
 
     return status;
 }
+
+EFI_STATUS bootfs_read_all(
+    EFI_FILE_PROTOCOL *file,
+    VOID **data,
+    UINTN *size
+) {
+    EFI_STATUS status;
+    UINT64 file_size;
+    UINTN length;
+    UINTN total = 0;
+    UINT8 *buffer;
+
+    if (data == NULL || size == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    *data = NULL;
+    *size = 0;
+
+    if (file == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    status = bootfs_get_size(file, &file_size);
+    if (EFI_ERROR(status))
+        return status;
+
+    /* The file size must fit the allocation and read size type. */
+    if (file_size > (UINT64)(~(UINTN)0))
+        return EFI_BAD_BUFFER_SIZE;
+
+    length = (UINTN)file_size;
+
+    /* Avoid requesting a zero-byte allocation. */
+    if (length == 0)
+        return EFI_SUCCESS;
+
+    buffer = AllocatePool(length);
+    if (buffer == NULL)
+        return EFI_OUT_OF_RESOURCES;
+
+    while (total < length) {
+        UINTN remaining = length - total;
+        UINTN bytes_read = remaining;
+
+        status = bootfs_read(file, buffer + total, &bytes_read);
+        if (EFI_ERROR(status))
+            goto fail;
+
+        /* EOF before the advertised file size is incomplete data. */
+        if (bytes_read == 0) {
+            status = EFI_END_OF_FILE;
+            goto fail;
+        }
+
+        if (bytes_read > remaining) {
+            status = EFI_DEVICE_ERROR;
+            goto fail;
+        }
+        
+        total += bytes_read;
+    }
+
+    /* Transfer ownership only once the complete read succeeds. */
+    *data = buffer;
+    *size = length;
+    return EFI_SUCCESS;
+
+fail:
+    FreePool(buffer);
+    return status;
+}

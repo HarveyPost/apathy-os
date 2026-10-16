@@ -42,4 +42,17 @@ EFI_STATUS bootfs_get_size(
     UINT64 *size
 );
 
+/* Read a freshly opened regular file into an allocated buffer.
+*
+* Success: caller owns *data and must FreePool() it when non-Null.
+* Empty file: success with *data == NULL and *size == 0.
+* Failure: no allocation is returned.
+*
+* The caller retains ownership of the file handle. */
+EFI_STATUS bootfs_read_all(
+    EFI_FILE_PROTOCOL *file,
+    VOID **data,
+    UINTN *size
+);
+
 #endif
