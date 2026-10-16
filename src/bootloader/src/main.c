@@ -36,7 +36,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         if (!EFI_ERROR(status)) {
             Print(L"test.txt opened successfully.\n");
 
-            bytes_read = sizeof(buffer);
+            bytes_read = sizeof(buffer) -1;
             
             status = bootfs_read(
                 file,
@@ -46,6 +46,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
             if (!EFI_ERROR(status)) {
                 Print(L"Read %lu bytes.\n", (UINT64)bytes_read);
+                Print(L"Contents: \n%a\n", buffer);
             }
 
             /* Close the file even if reading failed. */
