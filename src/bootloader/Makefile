@@ -1,6 +1,6 @@
 ARCH = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
-OBJS = src/main.o
+OBJS = src/main.o src/bootfs.o
 TARGET = hello.efi
 
 EFIINC = /usr/include/efi
@@ -21,6 +21,8 @@ LDFLAGS = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 		  -Bsymbolic -L $(EFILIB) -L $(LIB) $(EFI_CRT_OBJS)
 
 all: $(TARGET)
+
+$(OBJS): src/bootfs.h
 
 hello.so: $(OBJS)
 	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi

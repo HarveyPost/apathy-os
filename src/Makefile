@@ -19,9 +19,10 @@ $(IMAGE):
 # Copy the latest application into the existing image.
 image: bootloader $(IMAGE)
 	mcopy -o -i $(IMAGE) bootloader/hello.efi ::/EFI/BOOT/BOOTX64.EFI
+	mcopy -o -i $(IMAGE) bootloader/files/test.txt ::test.txt
 
 run: image
 	qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=$(IMAGE) -net none
 
 clean:
-	rm -f $(IMAGE) bootloader/src/main.o bootloader/hello.so bootloader/hello.efi
+	rm -f $(IMAGE) bootloader/src/main.o bootloader/hello.so bootloader/hello.efi bootloader/src/bootfs.o
