@@ -76,3 +76,17 @@ EFI_STATUS bootfs_open_readonly(
         0
     );
 }
+
+EFI_STATUS bootfs_read(
+    EFI_FILE_PROTOCOL *file,
+    VOID *buffer,
+    UINTN *size
+) {
+    return uefi_call_wrapper(
+        file->Read,
+        3,
+        file,
+        size,
+        buffer
+    );
+}

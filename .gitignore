@@ -3,6 +3,7 @@
 *.d
 *.efi
 *.EFI
+*.so
 
 # Disk images and local firmware
 *.img

@@ -17,6 +17,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     EFI_FILE_PROTOCOL *file = NULL;
     EFI_STATUS close_status;
 
+    CHAR8 buffer[128];
+    UINTN bytes_read;
+
     InitializeLib(ImageHandle, SystemTable);
 
     status = bootfs_open_root(ImageHandle, SystemTable, &root);
@@ -33,7 +36,24 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         if (!EFI_ERROR(status)) {
             Print(L"test.txt opened successfully.\n");
 
-            status = uefi_call_wrapper(file->Close, 1, file);
+            bytes_read = sizeof(buffer);
+            
+            status = bootfs_read(
+                file,
+                buffer,
+                &bytes_read
+            );
+
+            if (!EFI_ERROR(status)) {
+                Print(L"Read %lu bytes.\n", (UINT64)bytes_read);
+            }
+
+            /* Close the file even if reading failed. */
+            close_status = uefi_call_wrapper(file->Close, 1, file);
+
+            /* Preserve a read error instead of overwriting it. */
+            if (!EFI_ERROR(status))
+                status = close_status;
         }
 
         /* Close the directory even if opening the file failed. */

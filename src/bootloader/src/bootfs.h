@@ -27,4 +27,13 @@ EFI_STATUS bootfs_open_readonly(
     EFI_FILE_PROTOCOL **file
 );
 
+
+/* size: buffer capacity on entry, bytes read on successful return.
+* The caller supplies and owns the buffer. */
+EFI_STATUS bootfs_read(
+    EFI_FILE_PROTOCOL *file,
+    VOID *buffer,
+    UINTN *size
+);
+
 #endif
