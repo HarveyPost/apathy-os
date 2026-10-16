@@ -1,0 +1,47 @@
+- [x] Choose x86-64 UEFI and a text-only interface for Jazz.
+- [x] Set up the Arch development tools, GNU-EFI, QEMU, and OVMF.
+- [x] Build a GNU-EFI Hello World application that waits for a keypress.
+- [x] Organise the bootloader, filesystem module, and future kernel directories.
+- [x] Automate building, preparing the FAT boot image, running QEMU, and cleaning.
+- [x] Configure Git to ignore generated files and downloaded dependencies.
+- [x] Package test.txt on the image and inspect it with mtools.
+- [x] Locate the boot device and open its filesystem root.
+- [x] Open, read, and display text files in chunks until EOF.
+- [x] Verify reading empty files and files larger than the buffer.
+- [x] Query file sizes with UEFI metadata and handle temporary allocations, errors, and cleanup.
+- [ ] Verify metadata sizes against bytes read and test missing-file error handling.
+- [ ] Load complete binary files into allocated buffers with overflow checks, partial-read handling, and clear ownership.
+- [ ] Support reads at specified offsets and test files containing zero bytes.
+- [ ] Set up a freestanding kernel build and package a minimal ELF64 kernel on the image.
+- [ ] Load the kernel file and validate ELF headers, program headers, and file bounds.
+- [ ] Allocate and load kernel segments, zero required memory, and validate the entry point.
+- [ ] Add serial logging to the bootloader.
+- [ ] Define shared boot information and collect the UEFI memory map.
+- [ ] Prepare the kernel stack, calling convention, and mappings needed for handoff.
+- [ ] Exit UEFI boot services with map-key retry handling and transfer control to the kernel.
+- [ ] Add kernel-owned serial output and run through the host terminal.
+- [ ] Set up GDB debugging and kernel panic diagnostics.
+- [ ] Implement the freestanding memory routines required by the kernel compiler.
+- [ ] Install descriptor tables, exception handlers, and dedicated exception stacks.
+- [ ] Implement physical-page allocation and reserve memory still in use.
+- [ ] Manage kernel page tables, mapping permissions, and page faults.
+- [ ] Add a kernel heap and safely reclaim unused bootloader memory.
+- [ ] Initialise hardware interrupts and a timer with a monotonic tick counter.
+- [ ] Add serial input, line editing, and a kernel diagnostic command interpreter.
+- [ ] Implement kernel threads, context switching, and cooperative scheduling.
+- [ ] Add preemptive scheduling and synchronisation for shared data.
+- [ ] Introduce process address spaces, user mode, and a system-call interface.
+- [ ] Load user-mode ELF programs and manage process exit, cleanup, and waiting.
+- [ ] Provide a user-space C runtime, basic library, file descriptors, and standard streams.
+- [ ] Load an initial RAM filesystem and introduce a common filesystem interface.
+- [ ] Implement disk access, partition discovery, and filesystem mounting.
+- [ ] Expose file and directory operations through kernel system calls.
+- [ ] Build a user-mode terminal shell, launch programs with arguments, and add basic utilities.
+- [ ] Add repeatable boot, memory, filesystem, and process regression checks.
+- [ ] Document setup, build commands, architecture, interfaces, and current limitations.
+- [ ] Optional: add keyboard input and an on-screen text terminal.
+- [ ] Optional: add pipes, redirection, and multiple terminal sessions.
+- [ ] Optional: add networking and sockets.
+- [ ] Optional: support multiple CPU cores.
+- [ ] Optional: test on more virtual hardware and a physical UEFI machine.
+- [ ] Optional: port development tools and build Jazz from within Jazz.

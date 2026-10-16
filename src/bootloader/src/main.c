@@ -40,32 +40,33 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
             status = bootfs_get_size(file, &file_size);
 
-            if (!EFI_ERROR(status))
+            if (!EFI_ERROR(status)) {
                 Print(L"File size: %lu bytes.\n", file_size);
 
-            Print(L"Contents:\n");
-            
-            for (;;) {
-                /* Reset capacity before every read. */
-                bytes_read = sizeof(buffer) - 1;
-
-                status = bootfs_read(file, buffer, &bytes_read);
-
-                if (EFI_ERROR(status))
-                    break;
-
-                /* A successful read of zero bytes means EOF. */
-                if (bytes_read == 0)
-                    break;
+                Print(L"Contents:\n");
                 
-                buffer[bytes_read] = '\0';
+                for (;;) {
+                    /* Reset capacity before every read. */
+                    bytes_read = sizeof(buffer) - 1;
 
-                Print(L"%a", buffer);
-                total_read += bytes_read;
-            }
+                    status = bootfs_read(file, buffer, &bytes_read);
+
+                    if (EFI_ERROR(status))
+                        break;
+
+                    /* A successful read of zero bytes means EOF. */
+                    if (bytes_read == 0)
+                        break;
+                    
+                    buffer[bytes_read] = '\0';
+
+                    Print(L"%a", buffer);
+                    total_read += bytes_read;
+                }
         
-            if (!EFI_ERROR(status))
-                    Print(L"Read %lu bytes in total.\n", total_read);
+                if (!EFI_ERROR(status))
+                    Print(L"\nRead %lu bytes in total.\n", total_read);
+            }
 
             /* Close the file even if reading failed. */
             close_status = uefi_call_wrapper(file->Close, 1, file);
@@ -73,12 +74,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             if (!EFI_ERROR(status))
                 status = close_status;
         }
-
-        /* Close the file even if reading failed. */
-        close_status = uefi_call_wrapper(file->Close, 1, file);
-
-        if (!EFI_ERROR(status))
-            status = close_status;
 
         /* Close the directory even if opening the file failed. */
         close_status = uefi_call_wrapper(root->Close, 1, root);
