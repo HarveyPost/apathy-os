@@ -4,6 +4,7 @@
 *.efi
 *.EFI
 *.so
+*.elf
 
 # Disk images and local firmware
 *.img

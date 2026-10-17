@@ -9,7 +9,7 @@
 - [x] Query file sizes with UEFI metadata and handle temporary allocations, errors, and cleanup.
 - [x] Load complete binary files into allocated buffers with overflow checks, partial-read handling, and clear ownership.
 - [x] Implement file seeking and binary reads using explicit byte counts.
-- [ ] Set up a freestanding kernel build and package a minimal ELF64 kernel on the image.
+- [x] Set up a freestanding kernel build and package a minimal ELF64 kernel on the image.
 - [ ] Load the kernel file and validate ELF headers, program headers, and file bounds.
 - [ ] Allocate and load kernel segments, zero required memory, and validate the entry point.
 - [ ] Add serial logging to the bootloader.

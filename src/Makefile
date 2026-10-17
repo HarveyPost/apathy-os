@@ -2,12 +2,15 @@ IMAGE := ../fat.img
 OVMF := /usr/share/edk2/x64/OVMF.4m.fd
 
 .DELETE_ON_ERROR:
-.PHONY: all bootloader image run clean
+.PHONY: all bootloader kernel image run clean
 
 all: image
 
 bootloader:
 	$(MAKE) -C bootloader
+
+kernel:
+	$(MAKE) -C kernel
 
 # Create the filesystem only when the image doesn't exist yet.
 $(IMAGE):
@@ -17,12 +20,14 @@ $(IMAGE):
 	mmd -i $(IMAGE) ::/EFI/BOOT
 
 # Copy the latest application into the existing image.
-image: bootloader $(IMAGE)
+image: bootloader kernel $(IMAGE)
 	mcopy -o -i $(IMAGE) bootloader/hello.efi ::/EFI/BOOT/BOOTX64.EFI
 	mcopy -o -i $(IMAGE) bootloader/files/test.txt ::test.txt
+	mcopy -o -i $(IMAGE) kernel/kernel.elf ::kernel.elf
 
 run: image
 	qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=$(IMAGE) -net none
 
 clean:
 	rm -f $(IMAGE) bootloader/src/main.o bootloader/hello.so bootloader/hello.efi bootloader/src/bootfs.o
+	$(MAKE) -C kernel clean
