@@ -8,6 +8,7 @@
 #define ELF_VERSION_CURRENT 1
 #define ELF_TYPE_EXECUTABLE 2
 #define ELF_MACHINE_X86_64 62
+#define ELF_PROGRAM_LOAD 1
 
 typedef struct {
     UINT8 e_ident[16];
@@ -26,12 +27,34 @@ typedef struct {
     UINT16 e_shstrndx;
 } ELF64_HEADER;
 
+typedef struct {
+    UINT32 p_type;
+    UINT32 p_flags;
+    UINT64 p_offset;
+    UINT64 p_vaddr;
+    UINT64 p_paddr;
+    UINT64 p_filesz;
+    UINT64 p_memsz;
+    UINT64 p_align;
+} ELF64_PROGRAM_HEADER;
+
 _Static_assert(sizeof(ELF64_HEADER) == 64,
                "ELF64 header must be 64 bytes");
 
 /* Validate the fixed header and copy it to header on success.
 * This does not validate program headers or load any segments. */
 EFI_STATUS elf64_validate_header(
+    const VOID *data,
+    UINTN size,
+    ELF64_HEADER *header
+);
+
+_Static_assert(sizeof(ELF64_PROGRAM_HEADER) == 56,
+               "ELF64 program header must be 56 bytes");
+
+/* Validate the ELF header, table bounds and loadable segment file ranges.
+* Does not allocate memory or check runtime placement and entry-point bounds. */
+EFI_STATUS elf64_validate_image(
     const VOID *data,
     UINTN size,
     ELF64_HEADER *header

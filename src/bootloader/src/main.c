@@ -44,10 +44,10 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
                 Print(L"Loaded %lu bytes into memory.\n", (UINT64)file_size);
                 
-                status = elf64_validate_header(file_data, file_size, &header);
+                status = elf64_validate_image(file_data, file_size, &header);
 
                 if (!EFI_ERROR(status)) {
-                    Print(L"ELF header accepted.\n");
+                    Print(L"ELF headers and segment file bounds accepted.\n");
                     Print(L"Entry point: 0x%lx\n", header.e_entry);
                     Print(
                         L"Program headers: %lu\n",
