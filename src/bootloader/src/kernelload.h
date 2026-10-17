@@ -26,4 +26,15 @@ EFI_STATUS kernelload_release(
     KERNEL_IMAGE *image
 );
 
+
+/* Validate, reserve, zero and populate the kernel's memory image.
+* Pass a zero-initiliased image. The caller owns successful allocations
+* and retains ownership of the source file buffer. */
+EFI_STATUS kernelload_load(
+    EFI_SYSTEM_TABLE *system_table,
+    const VOID *data,
+    UINTN size,
+    KERNEL_IMAGE *image
+);
+
 #endif

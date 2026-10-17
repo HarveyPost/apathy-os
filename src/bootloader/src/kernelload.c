@@ -118,3 +118,63 @@ EFI_STATUS kernelload_release(
 
     return status;
 }
+
+EFI_STATUS kernelload_load(
+    EFI_SYSTEM_TABLE *system_table,
+    const VOID *data,
+    UINTN size,
+    KERNEL_IMAGE *image
+) {
+    EFI_STATUS status;
+    ELF64_HEADER header;
+    const UINT8 *bytes = data;
+
+    status = kernelload_reserve(system_table, data, size, image);
+    if (EFI_ERROR(status))
+        return status;
+
+    /* Reservation has already validated this header and its table. */
+    uefi_call_wrapper(
+        CopyMemC,
+        3,
+        &header,
+        data,
+        sizeof(header)
+    );
+
+    /* Zero segment tails, gaps and page padding before copying. */
+    uefi_call_wrapper(
+        system_table->BootServices->SetMem,
+        3,
+        (VOID *)(UINTN)image->base,
+        image->pages * EFI_PAGE_SIZE,
+        0
+    );
+
+    for (UINTN i = 0; i < header.e_phnum; i++) {
+        ELF64_PROGRAM_HEADER segment;
+        UINTN offset = (UINTN)header.e_phoff + i * sizeof(segment);
+
+        uefi_call_wrapper(
+            CopyMemC,
+            3,
+            &segment,
+            bytes + offset,
+            sizeof(segment)
+        );
+        
+        if (segment.p_type != ELF_PROGRAM_LOAD ||
+            segment.p_filesz == 0)
+            continue;
+
+        uefi_call_wrapper(
+            CopyMemC,
+            3,
+            (VOID *)(UINTN)segment.p_paddr,
+            bytes + (UINTN)segment.p_offset,
+            (UINTN)segment.p_filesz
+        );
+    }
+
+    return EFI_SUCCESS;
+}

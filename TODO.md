@@ -11,7 +11,7 @@
 - [x] Implement file seeking and binary reads using explicit byte counts.
 - [x] Set up a freestanding kernel build and package a minimal ELF64 kernel on the image.
 - [x] Load the kernel file and validate ELF headers, program headers, and file bounds.
-- [ ] Allocate and load kernel segments, zero required memory, and validate the entry point.
+- [x] Allocate and load kernel segments, zero required memory, and validate the entry point.
 - [ ] Add serial logging to the bootloader.
 - [ ] Define shared boot information and collect the UEFI memory map.
 - [ ] Prepare the kernel stack, calling convention, and mappings needed for handoff.

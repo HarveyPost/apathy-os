@@ -45,14 +45,21 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
                 Print(L"Read %lu kernel file bytes.\n", (UINT64)file_size);
 
-                status = kernelload_reserve(
+                status = kernelload_load(
                     SystemTable,
                     file_data,
                     file_size,
                     &kernel
                 );
 
+                /* The loaded image has its own allocation. */
+                if (file_data != NULL) {
+                    FreePool(file_data);
+                    file_data = NULL;
+                }
+
                 if (!EFI_ERROR(status)) {
+                    Print(L"Kernel segments copied and zero-initialised.\n");
                     Print(L"Kernel base: 0x%lx\n", kernel.base);
                     Print(L"Kernel pages: %lu\n", (UINT64)kernel.pages);
                     Print(L"Entry point: 0x%lx\n", kernel.entry);
@@ -64,12 +71,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                     status = release_status;
 
                 if (!EFI_ERROR(status))
-                    Print(L"Kernel reservation released.\n");
-
-                if (file_data != NULL) {
-                    FreePool(file_data);
-                    file_data = NULL;
-                }
+                    Print(L"Kernel pages released.\n");
             }
 
             /* Close the file even if reading failed. */
