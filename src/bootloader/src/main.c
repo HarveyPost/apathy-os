@@ -9,6 +9,7 @@
 #include <efilib.h>
 
 #include "bootfs.h"
+#include "elf64.h"
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
@@ -29,45 +30,35 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
         status = bootfs_open_readonly(
             root,
-            L"\\test.txt",
+            L"\\kernel.elf",
             &file
         );
 
         if (!EFI_ERROR(status)) {
-            Print(L"test.txt opened successfully.\n");
+            Print(L"kernel.elf opened successfully.\n");
 
             status = bootfs_read_all(file, &file_data, &file_size);
 
             if (!EFI_ERROR(status)) {
-                UINT8 sample[8];
-                UINTN bytes_read = sizeof(sample);
+                ELF64_HEADER header;
 
-                /* Use offset 5, or EOF if the file is shorter. */
-                UINT64 offset = file_size < 5 ? file_size : 5;
-                
                 Print(L"Loaded %lu bytes into memory.\n", (UINT64)file_size);
+                
+                status = elf64_validate_header(file_data, file_size, &header);
 
+                if (!EFI_ERROR(status)) {
+                    Print(L"ELF header accepted.\n");
+                    Print(L"Entry point: 0x%lx\n", header.e_entry);
+                    Print(
+                        L"Program headers: %lu\n",
+                        (UINT64)header.e_phnum
+                    );
+                }
+
+                /* Free the buffer even if validation failed. */
                 if (file_data != NULL) {
                     FreePool(file_data);
                     file_data = NULL;
-                }
-
-                status = bootfs_seek(file, offset);
-
-                if (!EFI_ERROR(status))
-                    status = bootfs_read(file, sample, &bytes_read);
-
-                if (!EFI_ERROR(status)) {
-                    Print(
-                        L"Read %lu bytes at offset %lu:\n",
-                        (UINT64)bytes_read,
-                        offset
-                    );
-
-                    for (UINTN i = 0; i < bytes_read; i++)
-                        Print(L"%02x ", (UINT32)sample[i]);
-
-                    Print(L"\n");
                 }
             }
 
@@ -87,7 +78,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     }
 
     if (EFI_ERROR(status))
-        Print(L"Filesystem error: %r\n", status);
+        Print(L"Boot error: %r\n", status);
 
     Print(L"Press any key to return to UEFI!\n");
     WaitForSingleEvent(SystemTable->ConIn->WaitForKey, 0);
