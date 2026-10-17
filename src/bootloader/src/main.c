@@ -47,7 +47,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                 status = elf64_validate_image(file_data, file_size, &header);
 
                 if (!EFI_ERROR(status)) {
-                    Print(L"ELF headers and segment file bounds accepted.\n");
+                    Print(L"ELF image layout and entry point accepted.\n");
                     Print(L"Entry point: 0x%lx\n", header.e_entry);
                     Print(
                         L"Program headers: %lu\n",

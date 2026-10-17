@@ -61,6 +61,9 @@ EFI_STATUS elf64_validate_image(
     UINTN load_count = 0;
     UINTN table_offset;
 
+    UINT64 previous_end = 0;
+    BOOLEAN entry_valid = FALSE;
+
     if (header == NULL)
         return EFI_INVALID_PARAMETER;
 
@@ -101,6 +104,11 @@ EFI_STATUS elf64_validate_image(
             sizeof(segment)
         );
 
+        if (segment.p_type == ELF_PROGRAM_DYNAMIC ||
+            segment.p_type == ELF_PROGRAM_INTERPRETER ||
+            segment.p_type == ELF_PROGRAM_TLS)
+            return EFI_UNSUPPORTED;
+
         if (segment.p_type != ELF_PROGRAM_LOAD)
             continue;
 
@@ -113,11 +121,42 @@ EFI_STATUS elf64_validate_image(
              segment.p_filesz > (UINT64)size - segment.p_offset))
             return EFI_LOAD_ERROR;
 
-        if (segment.p_memsz != 0)
-            ++load_count;
+        /* Empty loadable segments need no destination memory. */
+        if (segment.p_memsz == 0)
+            continue;
+
+        /* Initially, physical and virtual addresses must match. */
+        if (segment.p_paddr != segment.p_vaddr)
+            return EFI_UNSUPPORTED;
+
+        /* Check before calculating the segment's end address. */
+        if (segment.p_memsz > (~(UINT64)0) - segment.p_vaddr)
+            return EFI_LOAD_ERROR;
+
+        /* Alignment must be 0, 1 or a power of two.
+        * File and memory offsets must agree modulo that alignment. */
+        if (segment.p_align > 1 &&
+            ((segment.p_align & (segment.p_align - 1)) != 0 ||
+             segment.p_vaddr % segment.p_align !=
+             segment.p_offset % segment.p_align))
+            return EFI_LOAD_ERROR;
+
+        /* Require sorted, non-overlapping loadable byte ranges. */
+        if (segment.p_vaddr < previous_end)
+            return EFI_LOAD_ERROR;
+
+        previous_end = segment.p_vaddr + segment.p_memsz;
+
+        /* The entry must refer to file-backed executable bytes. */
+        if ((segment.p_flags & ELF_SEGMENT_EXECUTE) != 0 &&
+            candidate.e_entry >= segment.p_vaddr &&
+            candidate.e_entry - segment.p_vaddr < segment.p_filesz)
+            entry_valid = TRUE;
+
+        ++load_count;
     }
 
-    if (load_count == 0)
+    if (load_count == 0 || !entry_valid)
         return EFI_LOAD_ERROR;
 
     *header = candidate;
