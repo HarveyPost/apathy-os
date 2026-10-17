@@ -9,7 +9,7 @@
 #include <efilib.h>
 
 #include "bootfs.h"
-#include "elf64.h"
+#include "kernelload.h"
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
@@ -40,22 +40,32 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             status = bootfs_read_all(file, &file_data, &file_size);
 
             if (!EFI_ERROR(status)) {
-                ELF64_HEADER header;
+                KERNEL_IMAGE kernel = {0};
+                EFI_STATUS release_status;
 
-                Print(L"Loaded %lu bytes into memory.\n", (UINT64)file_size);
-                
-                status = elf64_validate_image(file_data, file_size, &header);
+                Print(L"Read %lu kernel file bytes.\n", (UINT64)file_size);
+
+                status = kernelload_reserve(
+                    SystemTable,
+                    file_data,
+                    file_size,
+                    &kernel
+                );
 
                 if (!EFI_ERROR(status)) {
-                    Print(L"ELF image layout and entry point accepted.\n");
-                    Print(L"Entry point: 0x%lx\n", header.e_entry);
-                    Print(
-                        L"Program headers: %lu\n",
-                        (UINT64)header.e_phnum
-                    );
+                    Print(L"Kernel base: 0x%lx\n", kernel.base);
+                    Print(L"Kernel pages: %lu\n", (UINT64)kernel.pages);
+                    Print(L"Entry point: 0x%lx\n", kernel.entry);
                 }
 
-                /* Free the buffer even if validation failed. */
+                release_status = kernelload_release(SystemTable, &kernel);
+
+                if (!EFI_ERROR(status))
+                    status = release_status;
+
+                if (!EFI_ERROR(status))
+                    Print(L"Kernel reservation released.\n");
+
                 if (file_data != NULL) {
                     FreePool(file_data);
                     file_data = NULL;
