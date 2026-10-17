@@ -55,4 +55,11 @@ EFI_STATUS bootfs_read_all(
     UINTN *size
 );
 
+/* Set a regular file's position to an absolute byte offset.
+* Offset 0 means the beginning. The caller still owns the handle. */
+EFI_STATUS bootfs_seek(
+    EFI_FILE_PROTOCOL *file,
+    UINT64 offset
+);
+
 #endif

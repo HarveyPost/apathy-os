@@ -214,3 +214,18 @@ fail:
     FreePool(buffer);
     return status;
 }
+
+EFI_STATUS bootfs_seek(
+    EFI_FILE_PROTOCOL *file,
+    UINT64 offset
+) {
+    if (file == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    return uefi_call_wrapper(
+        file->SetPosition,
+        2,
+        file,
+        offset
+    );
+}

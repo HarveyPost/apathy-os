@@ -39,10 +39,36 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             status = bootfs_read_all(file, &file_data, &file_size);
 
             if (!EFI_ERROR(status)) {
+                UINT8 sample[8];
+                UINTN bytes_read = sizeof(sample);
+
+                /* Use offset 5, or EOF if the file is shorter. */
+                UINT64 offset = file_size < 5 ? file_size : 5;
+                
                 Print(L"Loaded %lu bytes into memory.\n", (UINT64)file_size);
 
-                if (file_data != NULL)
+                if (file_data != NULL) {
                     FreePool(file_data);
+                    file_data = NULL;
+                }
+
+                status = bootfs_seek(file, offset);
+
+                if (!EFI_ERROR(status))
+                    status = bootfs_read(file, sample, &bytes_read);
+
+                if (!EFI_ERROR(status)) {
+                    Print(
+                        L"Read %lu bytes at offset %lu:\n",
+                        (UINT64)bytes_read,
+                        offset
+                    );
+
+                    for (UINTN i = 0; i < bytes_read; i++)
+                        Print(L"%02x ", (UINT32)sample[i]);
+
+                    Print(L"\n");
+                }
             }
 
             /* Close the file even if reading failed. */

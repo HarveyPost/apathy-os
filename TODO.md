@@ -7,8 +7,8 @@
 - [x] Locate the boot device and open its filesystem root.
 - [x] Open, read, and display text files in chunks until EOF, including empty files.
 - [x] Query file sizes with UEFI metadata and handle temporary allocations, errors, and cleanup.
-- [ ] Load complete binary files into allocated buffers with overflow checks, partial-read handling, and clear ownership.
-- [ ] Implement file seeking and binary reads using explicit byte counts.
+- [x] Load complete binary files into allocated buffers with overflow checks, partial-read handling, and clear ownership.
+- [x] Implement file seeking and binary reads using explicit byte counts.
 - [ ] Set up a freestanding kernel build and package a minimal ELF64 kernel on the image.
 - [ ] Load the kernel file and validate ELF headers, program headers, and file bounds.
 - [ ] Allocate and load kernel segments, zero required memory, and validate the entry point.
@@ -34,8 +34,3 @@
 - [ ] Implement disk access, partition discovery, and filesystem mounting.
 - [ ] Expose file and directory operations through kernel system calls.
 - [ ] Build a user-mode terminal shell, launch programs with arguments, and add basic utilities.
-- [ ] Optional: add keyboard input and an on-screen text terminal.
-- [ ] Optional: add pipes, redirection, and multiple terminal sessions.
-- [ ] Optional: add networking and sockets.
-- [ ] Optional: support multiple CPU cores.
-- [ ] Optional: port development tools and build Jazz from within Jazz.
