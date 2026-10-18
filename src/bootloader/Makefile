@@ -10,7 +10,7 @@ EFILIB = /usr/lib
 EFI_CRT_OBJS = $(EFILIB)/crt0-efi-$(ARCH).o
 EFI_LDS = $(EFILIB)/elf_$(ARCH)_efi.lds
 
-CFLAGS = $(EFIINCS) -fno-stack-protector -fpic \
+CFLAGS = -I../shared $(EFIINCS) -fno-stack-protector -fpic \
 		 -fshort-wchar -mno-red-zone -Wall
 
 ifeq ($(ARCH),x86_64)
@@ -27,6 +27,7 @@ src/elf64.o src/kernelload.o: src/elf64.h
 src/main.o src/kernelload.o: src/kernelload.h
 src/main.o src/bootserial.o: src/bootserial.h
 src/main.o src/bootmem.o: src/bootmem.h
+src/main.o: ../shared/bootinfo.h
 
 hello.so: $(OBJS)
 	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi

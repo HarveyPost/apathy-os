@@ -5,6 +5,7 @@
 #include "kernelload.h"
 #include "bootserial.h"
 #include "bootmem.h"
+#include "bootinfo.h"
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -52,6 +53,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
             if (!EFI_ERROR(status)) {
                 KERNEL_IMAGE kernel = {0};
                 BOOT_MEMORY_MAP memory_map = {0};
+                BOOT_INFO boot_info = {0};
                 EFI_STATUS release_status;
 
                 Print(L"Read %lu kernel file bytes.\n", (UINT64)file_size);
@@ -78,6 +80,30 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                     Print(L"Entry point: 0x%lx\n", kernel.entry);
 
                     status = bootmem_capture(SystemTable, &memory_map);
+
+                    if (!EFI_ERROR(status)) {
+                        boot_info = (BOOT_INFO) {
+                            .version = BOOT_INFO_VERSION,
+                            .size = sizeof(BOOT_INFO),
+
+                            .memory_map_address = 
+                                (uint64_t)(uintptr_t)memory_map.buffer,
+                            .memory_map_size = memory_map.size,
+                            .memory_map_descriptor_size =
+                                memory_map.descriptor_size,
+                            .memory_map_descriptor_version = 
+                                memory_map.descriptor_version,
+
+                            .kernel_base = kernel.base,
+                            .kernel_size = 
+                                (uint64_t)kernel.pages * EFI_PAGE_SIZE,
+                        };
+
+                        Print(L"Boot information version: %u\n", boot_info.version);
+                        Print(L"Boot information size: %u bytes\n", boot_info.size);
+                        Print(L"Kernel allocation: %lu bytes\n",
+                              (UINT64)boot_info.kernel_size);
+                    }
 
                     if (!EFI_ERROR(status)) {
                         Print(L"Memory map captured.\n");
