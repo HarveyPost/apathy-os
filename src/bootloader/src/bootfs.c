@@ -18,9 +18,15 @@ EFI_STATUS bootfs_open_root(
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *filesystem;
     EFI_STATUS status;
 
+    /* The caller passed &root, so dereferencing that address
+     * lets this function change the original value. */
     *root = NULL;
 
-    /* Find information about our running application. */
+    /* Find information about our running application.
+     *
+     * image_handle - identifies the running bootloader.
+     * *LoadedImageProtocol - points to a GUID identifying the loaded-image protocol. A GUID is a unique identifier that tells the firmware which interface you want.
+     * (VOID **)*loaded_image - tells the firmware where to write the resulting interface pointer. */
     status = uefi_call_wrapper(
         system_table->BootServices->HandleProtocol,
         3,
@@ -32,7 +38,11 @@ EFI_STATUS bootfs_open_root(
     if (EFI_ERROR(status))
         return status;
 
-    /* Get the filesystem on the device that loaded us. */
+    /* Get the filesystem on the device that loaded us. 
+     * 
+     * loaded_image->DeviceHandle - identifies the device from which the bootloader was loaded.
+     * &FileSystemProtocol - identifies the simple filesystem protocol.
+     * (VOID **)&filesystem - gives the firmware somewhere to write the resulting interface pointer. */
     status = uefi_call_wrapper(
         system_table->BootServices->HandleProtocol,
         3,
@@ -60,11 +70,11 @@ EFI_STATUS bootfs_open_readonly(
 ) {
     *file = NULL;
     
-    /* root -> Directory from which to open the file
-    *  file -> Where firmware writes the new handle
-    *  path -> Filename or path
-    *  EFI_FILE_MODE_READ -> open for reading
-    *  0 -> Attributes are unused when opening an existing file
+    /* root - Directory from which to open the file
+    *  file - Where firmware writes the new handle
+    *  path - Filename or path
+    *  EFI_FILE_MODE_READ - open for reading
+    *  0 - Attributes are unused when opening an existing file
     * Open() gives us access to the file; readings its contents is a separate operation. */
     return uefi_call_wrapper(
         root->Open,
@@ -104,7 +114,12 @@ EFI_STATUS bootfs_get_size(
 
     *size = 0;
 
-    /* Ask how much memory the metadata needs. */
+    /* Ask how much memory the metadata needs.
+     *
+     * file - identifies the open file.
+     * &GenericFileInfo - identifies the kid of metadata you want.
+     * &info_size - supplies the buffer capacity and receives the required size.
+     * NULL - means we haven't provided a buffer yet. */
     status = uefi_call_wrapper(
         file->GetInfo,
         4,
@@ -121,7 +136,8 @@ EFI_STATUS bootfs_get_size(
         
         return EFI_DEVICE_ERROR;
     }
-
+    
+    /* Now you can allocate the metadata buffer. */
     info = AllocatePool(info_size);
 
     if (info == NULL)
@@ -137,6 +153,7 @@ EFI_STATUS bootfs_get_size(
         info
     );
 
+    /* Extract the field we want, in this case FileSize. */
     if (!EFI_ERROR(status))
         *size = info->FileSize;
     
@@ -155,7 +172,8 @@ EFI_STATUS bootfs_read_all(
     UINTN length;
     UINTN total = 0;
     UINT8 *buffer;
-
+    
+    /* Without valid addresses, it cannot safely write the results. */
     if (data == NULL || size == NULL)
         return EFI_INVALID_PARAMETER;
 
@@ -169,7 +187,12 @@ EFI_STATUS bootfs_read_all(
     if (EFI_ERROR(status))
         return status;
 
-    /* The file size must fit the allocation and read size type. */
+    /* The file size must fit the allocation and read size type. 
+     * The expression builds the largest possible UINTN value:
+     *
+     * (UINTN)0 creates a zero of type UINTN.
+     * ~ flips every bit, producing all ones.
+     * (UINT64) converts that limit to the type of file_size for comparison. */
     if (file_size > (UINT64)(~(UINTN)0))
         return EFI_BAD_BUFFER_SIZE;
 
@@ -182,11 +205,19 @@ EFI_STATUS bootfs_read_all(
     buffer = AllocatePool(length);
     if (buffer == NULL)
         return EFI_OUT_OF_RESOURCES;
-
+    
+    /* Reading loop; need to fill the buffer with the file's bytes. 
+     *
+     * bytes_read is both an input and an output.
+     * Before the call, it contains the maximum number of bytes to read.
+     * Afterwards, it contains the actual number read. */
     while (total < length) {
         UINTN remaining = length - total;
         UINTN bytes_read = remaining;
 
+        /* buffer + total chooses where to put the bytes.
+         * Because buffer is a UINT8 *, adding one moves forward one byte.
+         * If we have already read 100 bytes, the next read writes at buffer + 100. */
         status = bootfs_read(file, buffer + total, &bytes_read);
         if (EFI_ERROR(status))
             goto fail;
@@ -215,17 +246,3 @@ fail:
     return status;
 }
 
-EFI_STATUS bootfs_seek(
-    EFI_FILE_PROTOCOL *file,
-    UINT64 offset
-) {
-    if (file == NULL)
-        return EFI_INVALID_PARAMETER;
-
-    return uefi_call_wrapper(
-        file->SetPosition,
-        2,
-        file,
-        offset
-    );
-}

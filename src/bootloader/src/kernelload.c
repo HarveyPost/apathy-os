@@ -49,19 +49,25 @@ EFI_STATUS kernelload_reserve(
         /* Validation already checked this addition for overflow. */
         end = segment.p_paddr + segment.p_memsz;
 
+        /* Reserve one continuous span covering both segments and the gap between. */
         if (segment.p_paddr < first)
             first = segment.p_paddr;
 
         if (end > last)
             last = end;
     }
-
-    /* Round the allocation outwards to whole pages. */
+    
+    /* Round the allocation outwards to whole pages.
+     * UEFI's page-allocation service works in units of 4096 bytes,
+     * so the allocation must start on a page boundary and cover
+     * a whole number of pages.
+     *
+     * First, round the starting address down. */
     first &= ~((UINT64)EFI_PAGE_MASK);
 
+    /* Next, round the exclusive end address up. */
     if (last > (~(UINT64)0) - EFI_PAGE_MASK)
         return EFI_LOAD_ERROR;
-
     last = (last + EFI_PAGE_MASK) & ~((UINT64)EFI_PAGE_MASK);
 
     /* Page zero is outside this loader's supported placements. */
@@ -73,8 +79,13 @@ EFI_STATUS kernelload_reserve(
     if (page_count > (UINT64)(~(UINTN)0))
         return EFI_BAD_BUFFER_SIZE;
 
+    /* Allocate the pages calculated. */
     address = first;
 
+    /* AllocateAddress - allocate at the exact address supplied through address.
+     * EfiLoaderCode - classify the allocated memory as loader code.
+     * (UINTN)page_count - how many consecutive pages to allocate.
+     * &address - a pointer through which the firmware receives the requested address and returns the allocation address. */
     status = uefi_call_wrapper(
         system_table->BootServices->AllocatePages,
         4,
@@ -87,6 +98,7 @@ EFI_STATUS kernelload_reserve(
     if (EFI_ERROR(status))
         return status;
 
+    /* On success, fill the caller's KERNEL_IMAGE record. */
     image->base = address;
     image->pages = (UINTN)page_count;
     image->entry = header.e_entry;
@@ -103,6 +115,7 @@ EFI_STATUS kernelload_release(
     if (system_table == NULL || image == NULL)
         return EFI_INVALID_PARAMETER;
 
+    /* Zero pages means the record owns no allocation, so there is nothing to release. */
     if (image->pages == 0)
         return EFI_SUCCESS;
 
@@ -133,7 +146,8 @@ EFI_STATUS kernelload_load(
     if (EFI_ERROR(status))
         return status;
 
-    /* Reservation has already validated this header and its table. */
+    /* Reservation has already validated this header and its table.
+     * Copy the ELF header into its own local variable. */
     uefi_call_wrapper(
         CopyMemC,
         3,
@@ -142,7 +156,8 @@ EFI_STATUS kernelload_load(
         sizeof(header)
     );
 
-    /* Zero segment tails, gaps and page padding before copying. */
+    /* Zero segment tails, gaps and page padding before copying as
+     * allocation alone doesn't guarantee that the memory contains zeroes. */
     uefi_call_wrapper(
         system_table->BootServices->SetMem,
         3,
@@ -151,6 +166,7 @@ EFI_STATUS kernelload_load(
         0
     );
 
+    /* Copy each loadable segment into the allocated memory. */
     for (UINTN i = 0; i < header.e_phnum; i++) {
         ELF64_PROGRAM_HEADER segment;
         UINTN offset = (UINTN)header.e_phoff + i * sizeof(segment);
@@ -167,6 +183,9 @@ EFI_STATUS kernelload_load(
             segment.p_filesz == 0)
             continue;
 
+        /* Destination: segment.p_paddr,
+         * Source: the file buffer plus segment.p_offset,
+         * Amount: segment.p_filesz bytes */
         uefi_call_wrapper(
             CopyMemC,
             3,

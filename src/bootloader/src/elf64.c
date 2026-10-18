@@ -11,13 +11,16 @@ EFI_STATUS elf64_validate_header (
     if (header == NULL)
         return EFI_INVALID_PARAMETER;
 
-    /* Check the buffer length before reading anything from it. */
     if (size < sizeof(candidate))
         return EFI_LOAD_ERROR;
 
     if (data == NULL)
         return EFI_INVALID_PARAMETER;
 
+    /* Copy the header's first 64 bits into candidate.
+     *
+     * Arguments are destination, source and byte count.
+     * Copying into a local structure gives an approximately aligned object whos members we can inspect. */
     uefi_call_wrapper(
         CopyMemC,
         3,
@@ -71,6 +74,9 @@ EFI_STATUS elf64_validate_image(
     if (EFI_ERROR(status))
         return status;
 
+
+    /*** Next, check the program header table. ***/
+
     if (candidate.e_phnum == 0)
         return EFI_LOAD_ERROR;
 
@@ -78,9 +84,13 @@ EFI_STATUS elf64_validate_image(
     if (candidate.e_phnum == 0xffff)
         return EFI_UNSUPPORTED;
 
+    /* The program-header structure is 56 bytes.
+     * Each table entry must match the size the code expects. */
     if (candidate.e_phentsize != sizeof(ELF64_PROGRAM_HEADER))
         return EFI_LOAD_ERROR;
-
+    
+    /* Check where the table starts.
+     * The loader requires it to start after the fixed header and within the file's bounds. */
     if (candidate.e_phoff < sizeof(ELF64_HEADER) ||
         candidate.e_phoff > (UINT64)size)
         return EFI_LOAD_ERROR;
@@ -95,7 +105,8 @@ EFI_STATUS elf64_validate_image(
     for (UINTN i = 0; i < candidate.e_phnum; i++) {
         ELF64_PROGRAM_HEADER segment;
         UINTN offset = table_offset + i * sizeof(segment);
-
+        
+        /* Copy the entry into a local structure. */
         uefi_call_wrapper(
             CopyMemC,
             3,
@@ -104,6 +115,10 @@ EFI_STATUS elf64_validate_image(
             sizeof(segment)
         );
 
+        /* Features the loader doesn't implement:
+         * 1. dynamic linking information.
+         * 2. a requested interpreter.
+         * 3. thread-local storage. */
         if (segment.p_type == ELF_PROGRAM_DYNAMIC ||
             segment.p_type == ELF_PROGRAM_INTERPRETER ||
             segment.p_type == ELF_PROGRAM_TLS)
@@ -112,10 +127,18 @@ EFI_STATUS elf64_validate_image(
         if (segment.p_type != ELF_PROGRAM_LOAD)
             continue;
 
+        /* The destination must have room for all the file bytes.
+         *
+         * p_filesz - how many bytes come from the file.
+         * p_memsz - how many bytes the segment occupies in memory. */
         if (segment.p_filesz > segment.p_memsz)
             return EFI_LOAD_ERROR;
 
-        /* A segment with no file bytes needs no file-data range. */
+        /* Check a segment's source bytes actually exist inside the file buffer.
+         *
+         * p_offset - where the segment's bytes begin in the file.
+         * p-filesz - how many bytes to copy from there.
+         * size - the size of the complete file buffer. */
         if (segment.p_filesz != 0 &&
             (segment.p_offset > (UINT64)size ||
              segment.p_filesz > (UINT64)size - segment.p_offset))
@@ -125,16 +148,18 @@ EFI_STATUS elf64_validate_image(
         if (segment.p_memsz == 0)
             continue;
 
-        /* Initially, physical and virtual addresses must match. */
+        /* Initially, physical and virtual addresses must match.
+         * Supporting different values would require arranging suitable address mappings. */
         if (segment.p_paddr != segment.p_vaddr)
             return EFI_UNSUPPORTED;
 
-        /* Check before calculating the segment's end address. */
+        /* Check for overflow when calculating the segment's end address. */
         if (segment.p_memsz > (~(UINT64)0) - segment.p_vaddr)
             return EFI_LOAD_ERROR;
 
         /* Alignment must be 0, 1 or a power of two.
-        * File and memory offsets must agree modulo that alignment. */
+         * For alignment greater than 1, the virtual address and file offset
+         * must have the same remainder when divided by the alignment. */
         if (segment.p_align > 1 &&
             ((segment.p_align & (segment.p_align - 1)) != 0 ||
              segment.p_vaddr % segment.p_align !=
@@ -147,7 +172,9 @@ EFI_STATUS elf64_validate_image(
 
         previous_end = segment.p_vaddr + segment.p_memsz;
 
-        /* The entry must refer to file-backed executable bytes. */
+        /* Check whether the kernel's entry point is inside a suitable segment.
+         *
+         * p_filesz instead of p_memsz as it requires the entry point to refer to file-backed executable bytes, rather than the additional zero-filled storage. */
         if ((segment.p_flags & ELF_SEGMENT_EXECUTE) != 0 &&
             candidate.e_entry >= segment.p_vaddr &&
             candidate.e_entry - segment.p_vaddr < segment.p_filesz)

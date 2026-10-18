@@ -3,6 +3,9 @@
 
 #include <efi.h>
 
+/* base - the starting physical address of its allocated memory.
+ * pages - how many memory pages were allocated.
+ * entry - the address where kernel execution should begin. */
 typedef struct {
     EFI_PHYSICAL_ADDRESS base;
     UINTN pages;
