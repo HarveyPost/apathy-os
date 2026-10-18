@@ -1,18 +1,12 @@
-/**
-  * @file main.c
-  * @author harveypost
-  * @date Oct 2026
-  * @brief Bootloader entry point and main application
-  */
-
 #include <efi.h>
 #include <efilib.h>
 
 #include "bootfs.h"
 #include "kernelload.h"
+#include "bootserial.h"
 
-EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
-
+EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+{
     EFI_FILE_PROTOCOL *root = NULL;
     EFI_STATUS status;
     EFI_FILE_PROTOCOL *file = NULL;
@@ -21,7 +15,22 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     VOID *file_data = NULL;
     UINTN file_size = 0;
 
+    EFI_SERIAL_IO_PROTOCOL *serial = NULL;
+    EFI_STATUS serial_status;
+
+
     InitializeLib(ImageHandle, SystemTable);
+
+    serial_status = bootserial_open(SystemTable, &serial);
+
+    if (!EFI_ERROR(serial_status))
+        serial_status = bootserial_write(
+            serial,
+            "[boot] Jazz bootloader started.\n"
+        );
+
+    if (EFI_ERROR(serial_status))
+        Print(L"Serial logging unavailable: %r\n", serial_status);
 
     status = bootfs_open_root(ImageHandle, SystemTable, &root);
 
@@ -59,6 +68,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                 }
 
                 if (!EFI_ERROR(status)) {
+                    if (serial != NULL)
+                        (VOID)bootserial_write(serial, "[boot] Kernel loaded. \n");
                     Print(L"Kernel segments copied and zero-initialised.\n");
                     Print(L"Kernel base: 0x%lx\n", kernel.base);
                     Print(L"Kernel pages: %lu\n", (UINT64)kernel.pages);
@@ -89,8 +100,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             status = close_status;
     }
 
-    if (EFI_ERROR(status))
+    if (EFI_ERROR(status)) {
         Print(L"Boot error: %r\n", status);
+
+        if (serial != NULL)
+            (VOID)bootserial_write(serial, "[boot] Boot failed.\n");
+    }
 
     Print(L"Press any key to return to UEFI!\n");
     WaitForSingleEvent(SystemTable->ConIn->WaitForKey, 0);
