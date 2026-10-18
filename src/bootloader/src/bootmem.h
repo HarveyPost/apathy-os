@@ -3,6 +3,16 @@
 
 #include <efi.h>
 
+/* A UEFI memory map describes the physical address ranges and their purpose.
+ * It lets an OS distinguish available memory from memory occupied
+ * by firmware, loaded programs or reserved resources.
+ *
+ * buffer - points to the returned memory descriptors.
+ * capacity - allocated buffer space, in bytes.
+ * size - bytes actually occupied by the returned map.
+ * key - firmware token identifying the captured map.
+ * descriptor_size - byte distance between consecutive descriptors.
+ * descriptor_version - version of the descriptor format. */
 typedef struct {
     VOID *buffer;
     UINTN capacity;

@@ -13,7 +13,9 @@ EFI_STATUS bootmem_capture(
     map->descriptor_size = 0;
     map->descriptor_version = 0;
 
-    /* Allocation can change the map, so allow bounded retries. */
+    /* Allocation can change the map, so allow bounded retries.
+     * The amount of space required can change between asking
+     * for its size and retrieving it. */
     for (UINTN attempt = 0; attempt < 4; attempt++) {
         UINTN size = map->capacity;
         UINTN key = 0;
@@ -30,11 +32,15 @@ EFI_STATUS bootmem_capture(
             &descriptor_size,
             &version
         );
-
+        
+        /* On the first capture, buffer and capacity are zero-initiliased
+         * so the call cannot retrieve the complete map yet. It's purpose
+         * is to discover how much space is needed. */
         if (status == EFI_BUFFER_TOO_SMALL) {
             UINTN capacity;
             VOID *buffer = NULL;
 
+            /* Must be large enough to contain the descriptor structure. */
             if (descriptor_size < sizeof(EFI_MEMORY_DESCRIPTOR))
                 return EFI_DEVICE_ERROR;
 
@@ -42,12 +48,20 @@ EFI_STATUS bootmem_capture(
             if (descriptor_size > ((~(UINTN)0) - size) / 8)
                 return EFI_BAD_BUFFER_SIZE;
 
+            /* size describes the map before we allocate the new buffer.
+            * That allocation can split an existing memory range into
+            * several ranges, increasing the number of descriptors. */
             capacity = size + 8 * descriptor_size;
             
             status = bootmem_release(system_table, map);
             if (EFI_ERROR(status))
                 return status;
 
+            /* Allocate the new buffer.
+             *
+             * EfiLoaderData - classify the allocation as data belonging to the leader.
+             * capacity - request that many bytes, including the spare descriptor space.
+             * &buffer - receive the allocated memory's address. */
             status = uefi_call_wrapper(
                 system_table->BootServices->AllocatePool,
                 3,
@@ -59,6 +73,7 @@ EFI_STATUS bootmem_capture(
             if (EFI_ERROR(status))
                 return status;
 
+            /* Record the replacement. */
             map->buffer = buffer;
             map->capacity = capacity;
             continue;
@@ -67,6 +82,7 @@ EFI_STATUS bootmem_capture(
         if (EFI_ERROR(status))
             return status;
 
+        /* Check returned information is consistent. */
         if (descriptor_size < sizeof(EFI_MEMORY_DESCRIPTOR) ||
             size == 0 || size > map->capacity ||
             size % descriptor_size != 0)
@@ -75,6 +91,7 @@ EFI_STATUS bootmem_capture(
         if (version != EFI_MEMORY_DESCRIPTOR_VERSION)
             return EFI_UNSUPPORTED;
 
+        /* Publish validated results into the caller's record. */
         map->size = size;
         map->key = key;
         map->descriptor_size = descriptor_size;
