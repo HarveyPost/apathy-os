@@ -5,6 +5,11 @@
 
 #define BOOT_INFO_VERSION 1
 
+/* version, size - Identify the boot-information format.
+* memory_map_address, memory_map_size - Locate the captured map.
+* Descriptor size and version - Describe how to interpret its entries.
+* reserved - An explicitly reserved four-byte slot, currently zero.
+* kernel_base, kernel_size - Identify the allocation occupied by the kernel. */
 typedef struct {
     uint32_t version;
     uint32_t size;
