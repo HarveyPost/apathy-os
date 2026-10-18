@@ -29,5 +29,5 @@ run: image
 	qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=$(IMAGE) -net none -display none -serial stdio -monitor none
 
 clean:
-	rm -f $(IMAGE) bootloader/src/main.o bootloader/hello.so bootloader/hello.efi bootloader/src/bootfs.o bootloader/src/elf64.o bootloader/src/kernelload.o bootloader/src/bootserial.o
+	rm -f $(IMAGE) bootloader/src/main.o bootloader/hello.so bootloader/hello.efi bootloader/src/bootfs.o bootloader/src/elf64.o bootloader/src/kernelload.o bootloader/src/bootserial.o bootloader/src/bootmem.o
 	$(MAKE) -C kernel clean

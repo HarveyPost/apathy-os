@@ -1,6 +1,6 @@
 ARCH = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
-OBJS = src/main.o src/bootfs.o src/elf64.o src/kernelload.o src/bootserial.o
+OBJS = src/main.o src/bootfs.o src/elf64.o src/kernelload.o src/bootserial.o src/bootmem.o
 TARGET = hello.efi
 
 EFIINC = /usr/include/efi
@@ -26,6 +26,7 @@ src/main.o src/bootfs.o: src/bootfs.h
 src/elf64.o src/kernelload.o: src/elf64.h
 src/main.o src/kernelload.o: src/kernelload.h
 src/main.o src/bootserial.o: src/bootserial.h
+src/main.o src/bootmem.o: src/bootmem.h
 
 hello.so: $(OBJS)
 	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi

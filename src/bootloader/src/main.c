@@ -4,6 +4,7 @@
 #include "bootfs.h"
 #include "kernelload.h"
 #include "bootserial.h"
+#include "bootmem.h"
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -50,6 +51,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
             if (!EFI_ERROR(status)) {
                 KERNEL_IMAGE kernel = {0};
+                BOOT_MEMORY_MAP memory_map = {0};
                 EFI_STATUS release_status;
 
                 Print(L"Read %lu kernel file bytes.\n", (UINT64)file_size);
@@ -74,7 +76,24 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                     Print(L"Kernel base: 0x%lx\n", kernel.base);
                     Print(L"Kernel pages: %lu\n", (UINT64)kernel.pages);
                     Print(L"Entry point: 0x%lx\n", kernel.entry);
+
+                    status = bootmem_capture(SystemTable, &memory_map);
+
+                    if (!EFI_ERROR(status)) {
+                        Print(L"Memory map captured.\n");
+                        Print(L"Memory descriptors: %lu\n",
+                              (UINT64)(memory_map.size / memory_map.descriptor_size));
+                        Print(L"Descriptor stride: %lu bytes\n",
+                              (UINT64)memory_map.descriptor_size);
+                        Print(L"Descriptor version: %lu\n",
+                              (UINT64)memory_map.descriptor_version);
+                    }
                 }
+
+                release_status = bootmem_release(SystemTable, &memory_map);
+
+                if (!EFI_ERROR(status))
+                    status = release_status;
 
                 release_status = kernelload_release(SystemTable, &kernel);
 
