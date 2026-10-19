@@ -14,7 +14,7 @@
 - [x] Allocate and load kernel segments, zero required memory, and validate the entry point.
 - [x] Add serial logging to the bootloader.
 - [x] Define shared boot information and collect the UEFI memory map.
-- [ ] Prepare the kernel stack, calling convention, and mappings needed for handoff.
+- [x] Prepare the kernel stack, calling convention, and mappings needed for handoff.
 - [ ] Exit UEFI boot services with map-key retry handling and transfer control to the kernel.
 - [ ] Add kernel-owned serial output and run through the host terminal.
 - [ ] Add kernel panic diagnostics and a QEMU/GDB debug target.

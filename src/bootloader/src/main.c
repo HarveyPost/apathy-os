@@ -8,6 +8,14 @@
 #include "bootinfo.h"
 #include "bootstack.h"
 #include "bootparams.h"
+#include "bootexit.h"
+#include "bootjump.h"
+
+static _Noreturn void boot_halt(void) {
+    for (;;) {
+        __asm__ volatile("cli\n\thlt");
+    }
+}
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -19,6 +27,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_FILE_PROTOCOL *file = NULL;
     VOID *file_data = NULL;
     UINTN file_size = 0;
+    BOOLEAN exit_attempted = FALSE;
 
     KERNEL_IMAGE kernel = {0};
     KERNEL_STACK stack = {0};
@@ -115,6 +124,28 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     Print(L"Descriptor stride: %lu bytes\n",
           (UINT64)memory_map.descriptor_size);
     Print(L"Boot preparation complete.\n");
+    Print(L"Leaving UEFI; entering kernel.\n");
+
+    status = bootexit_services(
+        ImageHandle,
+        SystemTable,
+        &memory_map,
+        parameters.info,
+        &exit_attempted
+    );
+
+    if (status != EFI_SUCCESS) {
+        if (exit_attempted)
+            boot_halt();
+
+        goto cleanup;
+    }
+
+    bootjump(
+        (KERNEL_ENTRY)(UINTN)kernel.entry,
+        parameters.info,
+        stack.base + (UINT64)stack.pages * EFI_PAGE_SIZE
+    );
 
 cleanup:
     /* Also runs when preparation failed partway through. */
@@ -126,7 +157,7 @@ cleanup:
     }
                 
     if (root != NULL) {
-        cleanup_status = uefi_call_wrapper(file->Close, 1, root);
+        cleanup_status = uefi_call_wrapper(root->Close, 1, root);
         root = NULL;
         if (!EFI_ERROR(status))
             status = cleanup_status;

@@ -1,6 +1,6 @@
 ARCH = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
-OBJS = src/main.o src/bootfs.o src/elf64.o src/kernelload.o src/bootserial.o src/bootmem.o src/bootstack.o src/bootparams.o src/bootjump.o
+OBJS = src/main.o src/bootfs.o src/elf64.o src/kernelload.o src/bootserial.o src/bootmem.o src/bootstack.o src/bootparams.o src/bootjump.o src/bootexit.o
 TARGET = hello.efi
 
 EFIINC = /usr/include/efi
@@ -31,6 +31,8 @@ src/main.o: ../shared/bootinfo.h
 src/main.o src/bootstack.o: src/bootstack.h
 src/main.o src/bootparams.o: src/bootparams.h ../shared/bootinfo.h
 src/bootjump.o: src/bootjump.h ../shared/bootinfo.h
+src/main.o src/bootexit.o: src/bootexit.h src/bootmem.h ../shared/bootinfo.h
+src/main.o: src/bootjump.h
 
 hello.so: $(OBJS)
 	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi
