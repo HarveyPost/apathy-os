@@ -1,5 +1,6 @@
 #include "bootinfo.h"
 #include "serial.h"
+#include "panic.h"
 #include <stddef.h>
 
 static _Noreturn void kernel_halt(void) {
@@ -18,8 +19,7 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
     if (boot_info == NULL ||
         boot_info->version != BOOT_INFO_VERSION ||
         boot_info->size != sizeof(BOOT_INFO)) {
-        (void)serial_write("[kernel] Invalid boot information.\r\n");
-        kernel_halt();
+        PANIC("Invalid boot information");
     }
 
     (void)serial_write("[kernel] Boot information format valid.\r\n");
