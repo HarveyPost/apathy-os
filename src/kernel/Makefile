@@ -1,5 +1,7 @@
 CC := x86_64-elf-gcc
 
+OBJS := src/main.o src/serial.o
+
 CFLAGS := -I../shared -std=c11 -O2 -g -Wall -Wextra \
           -ffreestanding -mno-red-zone -mgeneral-regs-only \
           -fno-pie -fno-stack-protector \
@@ -13,11 +15,14 @@ LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
 
 all: kernel.elf
 
-src/main.o: src/main.c ../shared/bootinfo.h
+src/main.o: ../shared/bootinfo.h src/serial.h
+src/serial.o: src/serial.h src/io.h
+
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-kernel.elf: src/main.o linker.ld
-	$(CC) $(CFLAGS) $(LDFLAGS) src/main.o -o $@ -lgcc
+kernel.elf: $(OBJS) linker.ld
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ -lgcc
 
 clean:
-	rm -f src/main.o kernel.elf
+	rm -f $(OBJS) kernel.elf

@@ -15,8 +15,8 @@
 - [x] Add serial logging to the bootloader.
 - [x] Define shared boot information and collect the UEFI memory map.
 - [x] Prepare the kernel stack, calling convention, and mappings needed for handoff.
-- [ ] Exit UEFI boot services with map-key retry handling and transfer control to the kernel.
-- [ ] Add kernel-owned serial output and run through the host terminal.
+- [x] Exit UEFI boot services with map-key retry handling and transfer control to the kernel.
+- [x] Add kernel-owned serial output and run through the host terminal.
 - [ ] Add kernel panic diagnostics and a QEMU/GDB debug target.
 - [ ] Implement the freestanding memory routines required by the kernel compiler.
 - [ ] Install descriptor tables, exception handlers, and dedicated exception stacks.
