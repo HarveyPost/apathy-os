@@ -6,6 +6,7 @@
 #include "bootserial.h"
 #include "bootmem.h"
 #include "bootinfo.h"
+#include "bootstack.h"
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -52,6 +53,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
             if (!EFI_ERROR(status)) {
                 KERNEL_IMAGE kernel = {0};
+                KERNEL_STACK stack = {0};
                 BOOT_MEMORY_MAP memory_map = {0};
                 BOOT_INFO boot_info = {0};
                 EFI_STATUS release_status;
@@ -79,7 +81,17 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                     Print(L"Kernel pages: %lu\n", (UINT64)kernel.pages);
                     Print(L"Entry point: 0x%lx\n", kernel.entry);
 
-                    status = bootmem_capture(SystemTable, &memory_map);
+                    status = bootstack_allocate(SystemTable, &stack);
+
+                    if (!EFI_ERROR(status)) {
+                        Print(L"Kernel stack size: %lu bytes\n",
+                              (UINT64)stack.pages * EFI_PAGE_SIZE);
+                        Print(L"Kernel stack base: 0x%lx\n", stack.base);
+                        Print(L"Kernel stack top: 0x%lx\n",
+                              stack.base + (UINT64)stack.pages * EFI_PAGE_SIZE);
+
+                        status = bootmem_capture(SystemTable, &memory_map);
+                    }
 
                     if (!EFI_ERROR(status)) {
                         boot_info = (BOOT_INFO) {
@@ -117,6 +129,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                 }
 
                 release_status = bootmem_release(SystemTable, &memory_map);
+
+                if (!EFI_ERROR(status))
+                    status = release_status;
+
+                release_status = bootstack_release(SystemTable, &stack);
 
                 if (!EFI_ERROR(status))
                     status = release_status;
