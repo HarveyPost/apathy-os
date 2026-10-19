@@ -109,12 +109,18 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                             .kernel_base = kernel.base,
                             .kernel_size = 
                                 (uint64_t)kernel.pages * EFI_PAGE_SIZE,
+
+                            .stack_base = stack.base,
+                            .stack_size = 
+                                (uint64_t)stack.pages * EFI_PAGE_SIZE,
                         };
 
                         Print(L"Boot information version: %u\n", boot_info.version);
                         Print(L"Boot information size: %u bytes\n", boot_info.size);
                         Print(L"Kernel allocation: %lu bytes\n",
                               (UINT64)boot_info.kernel_size);
+                        Print(L"Boot stack allocation: %lu bytes\n",
+                              (UINT64)boot_info.stack_size);
                     }
 
                     if (!EFI_ERROR(status)) {
