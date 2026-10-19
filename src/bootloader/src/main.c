@@ -7,6 +7,7 @@
 #include "bootmem.h"
 #include "bootinfo.h"
 #include "bootstack.h"
+#include "bootparams.h"
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -55,7 +56,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                 KERNEL_IMAGE kernel = {0};
                 KERNEL_STACK stack = {0};
                 BOOT_MEMORY_MAP memory_map = {0};
-                BOOT_INFO boot_info = {0};
+                BOOT_PARAMETERS parameters = {0};
                 EFI_STATUS release_status;
 
                 Print(L"Read %lu kernel file bytes.\n", (UINT64)file_size);
@@ -90,11 +91,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                         Print(L"Kernel stack top: 0x%lx\n",
                               stack.base + (UINT64)stack.pages * EFI_PAGE_SIZE);
 
-                        status = bootmem_capture(SystemTable, &memory_map);
+                        status = bootparams_allocate(SystemTable, &parameters);
+                        if (!EFI_ERROR(status))
+                            status = bootmem_capture(SystemTable, &memory_map);
                     }
 
                     if (!EFI_ERROR(status)) {
-                        boot_info = (BOOT_INFO) {
+                        *parameters.info = (BOOT_INFO) {
                             .version = BOOT_INFO_VERSION,
                             .size = sizeof(BOOT_INFO),
 
@@ -115,12 +118,18 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                                 (uint64_t)stack.pages * EFI_PAGE_SIZE,
                         };
 
-                        Print(L"Boot information version: %u\n", boot_info.version);
-                        Print(L"Boot information size: %u bytes\n", boot_info.size);
+                        Print(L"Boot information address: 0x%lx\n",
+                              parameters.base);
+                        Print(L"Boot information allocation: %lu bytes\n",
+                              (UINT64)parameters.pages * EFI_PAGE_SIZE);
+                        Print(L"Boot information version: %u\n",
+                              parameters.info->version);
+                        Print(L"Boot information size: %u bytes\n",
+                              parameters.info->size);
                         Print(L"Kernel allocation: %lu bytes\n",
-                              (UINT64)boot_info.kernel_size);
+                              (UINT64)parameters.info->kernel_size);
                         Print(L"Boot stack allocation: %lu bytes\n",
-                              (UINT64)boot_info.stack_size);
+                              (UINT64)parameters.info->stack_size);
                     }
 
                     if (!EFI_ERROR(status)) {
@@ -135,6 +144,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
                 }
 
                 release_status = bootmem_release(SystemTable, &memory_map);
+
+                if (!EFI_ERROR(status))
+                    status = release_status;
+
+                release_status = bootparams_release(SystemTable, &parameters);
 
                 if (!EFI_ERROR(status))
                     status = release_status;
