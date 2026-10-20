@@ -2,7 +2,7 @@ CC := x86_64-elf-gcc
 
 OBJS := src/main.o src/serial.o src/panic.o src/memory.o
 
-CFLAGS := -I../shared -std=c11 -O2 -g -Wall -Wextra \
+CFLAGS := -Iinclude -I../shared -std=c11 -O2 -g -Wall -Wextra \
           -ffreestanding -mno-red-zone -mgeneral-regs-only \
           -fno-pie -fno-stack-protector \
           -fno-asynchronous-unwind-tables -fno-unwind-tables
@@ -15,10 +15,10 @@ LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
 
 all: kernel.elf
 
-src/main.o: ../shared/bootinfo.h src/serial.h src/panic.h src/memory.h
-src/serial.o: src/serial.h src/io.h
-src/panic.o: src/panic.h src/serial.h
-src/memory.o: src/memory.h
+src/main.o: ../shared/bootinfo.h include/serial.h include/panic.h include/memory.h
+src/serial.o: include/serial.h include/io.h
+src/panic.o: include/panic.h include/serial.h
+src/memory.o: include/memory.h
 src/memory.o: CFLAGS += -fno-tree-loop-distribute-patterns
 
 %.o: %.c

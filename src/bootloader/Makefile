@@ -10,7 +10,7 @@ EFILIB = /usr/lib
 EFI_CRT_OBJS = $(EFILIB)/crt0-efi-$(ARCH).o
 EFI_LDS = $(EFILIB)/elf_$(ARCH)_efi.lds
 
-CFLAGS = -I../shared $(EFIINCS) -fno-stack-protector -fpic \
+CFLAGS = -Iinclude -I../shared $(EFIINCS) -fno-stack-protector -fpic \
 		 -fshort-wchar -mno-red-zone -Wall
 
 ifeq ($(ARCH),x86_64)
@@ -22,17 +22,17 @@ LDFLAGS = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 
 all: $(TARGET)
 
-src/main.o src/bootfs.o: src/bootfs.h
-src/elf64.o src/kernelload.o: src/elf64.h
-src/main.o src/kernelload.o: src/kernelload.h
-src/main.o src/bootserial.o: src/bootserial.h
-src/main.o src/bootmem.o: src/bootmem.h
+src/main.o src/bootfs.o: include/bootfs.h
+src/elf64.o src/kernelload.o: include/elf64.h
+src/main.o src/kernelload.o: include/kernelload.h
+src/main.o src/bootserial.o: include/bootserial.h
+src/main.o src/bootmem.o: include/bootmem.h
 src/main.o: ../shared/bootinfo.h
-src/main.o src/bootstack.o: src/bootstack.h
-src/main.o src/bootparams.o: src/bootparams.h ../shared/bootinfo.h
-src/bootjump.o: src/bootjump.h ../shared/bootinfo.h
-src/main.o src/bootexit.o: src/bootexit.h src/bootmem.h ../shared/bootinfo.h
-src/main.o: src/bootjump.h
+src/main.o src/bootstack.o: include/bootstack.h
+src/main.o src/bootparams.o: include/bootparams.h ../shared/bootinfo.h
+src/bootjump.o: include/bootjump.h ../shared/bootinfo.h
+src/main.o src/bootexit.o: include/bootexit.h include/bootmem.h ../shared/bootinfo.h
+src/main.o: include/bootjump.h
 
 hello.so: $(OBJS)
 	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi
