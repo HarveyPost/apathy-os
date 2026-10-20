@@ -17,7 +17,7 @@
 - [x] Prepare the kernel stack, calling convention, and mappings needed for handoff.
 - [x] Exit UEFI boot services with map-key retry handling and transfer control to the kernel.
 - [x] Add kernel-owned serial output and run through the host terminal.
-- [ ] Add kernel panic diagnostics and a QEMU/GDB debug target.
+- [x] Add kernel panic diagnostics and a QEMU/GDB debug target.
 - [ ] Implement the freestanding memory routines required by the kernel compiler.
 - [ ] Install descriptor tables, exception handlers, and dedicated exception stacks.
 - [ ] Implement physical-page allocation and reserve memory still in use.

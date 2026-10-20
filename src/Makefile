@@ -2,7 +2,7 @@ IMAGE := ../fat.img
 OVMF := /usr/share/edk2/x64/OVMF.4m.fd
 
 .DELETE_ON_ERROR:
-.PHONY: all bootloader kernel image run clean
+.PHONY: all bootloader kernel image run debug gdb clean
 
 all: image
 
@@ -27,6 +27,12 @@ image: bootloader kernel $(IMAGE)
 
 run: image
 	qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=$(IMAGE) -net none -display none -serial stdio -monitor none
+
+debug: image
+	qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=$(IMAGE) -net none -display none -serial stdio -monitor none -S -gdb tcp:127.0.0.1:1234 -no-reboot -no-shutdown
+
+gdb:
+	gdb -q kernel/kernel.elf -ex 'target remote 127.0.0.1:1234' -ex 'hbreak kernel_main' -ex 'hbreak panic_at'
 
 clean:
 	rm -f $(IMAGE) bootloader/src/main.o bootloader/hello.so bootloader/hello.efi bootloader/src/bootfs.o bootloader/src/elf64.o bootloader/src/kernelload.o bootloader/src/bootserial.o bootloader/src/bootmem.o bootloader/src/bootstack.o bootloader/src/bootparams.o bootloader/src/bootjump.o bootloader/src/bootexit.o

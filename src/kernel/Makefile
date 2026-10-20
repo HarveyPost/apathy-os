@@ -18,6 +18,7 @@ all: kernel.elf
 src/main.o: ../shared/bootinfo.h src/serial.h
 src/serial.o: src/serial.h src/io.h
 src/panic.o: src/panic.h src/serial.h
+src/main.o: ../shared/bootinfo.h src/serial.h src/panic.h
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

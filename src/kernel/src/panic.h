@@ -11,6 +11,6 @@ _Noreturn void panic_at(
 );
 
 /* Macros supplies filename and linenumber. */
-#define PANIC(message) panic_at((message), __FILE__, __LINE__);
+#define PANIC(message) panic_at((message), __FILE__, __LINE__)
 
 #endif
