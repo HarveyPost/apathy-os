@@ -6,4 +6,7 @@
 /* Fill count bytes with the unsigned-char value of value. */
 void *memset(void *destination, int value, size_t count);
 
+/* Copy count bytes between non-overlapping regions. */
+void *memcpy(void *destination, const void *source, size_t count);
+
 #endif

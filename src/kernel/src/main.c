@@ -46,5 +46,27 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
 
     (void)serial_write("[kernel] memset checks passed.\r\n");
 
+    const unsigned char source[] = {0x12, 0x00, 0x80, 0xFF};
+    unsigned char destination[6];
+
+    memset(destination, 0xAA, sizeof(destination));
+
+    if (memcpy(destination + 1, source, sizeof(source)) != destination + 1)
+        PANIC("memcpy returned the wrong pointer");
+
+    for (size_t i = 0; i < sizeof(source); i++) {
+        if (destination[i + 1] != source[i])
+            PANIC("memcpy copy failed");
+    }
+
+    if (destination[0] != 0xAA || destination[5] != 0xAA)
+        PANIC("memcpy wrote beyond its destination");
+
+    if (memcpy(destination, source, 0) != destination || destination[0] != 0xAA)
+        PANIC("memcpy zero-length copy failed");
+
+    (void)serial_write("[kernel] memcpy checks passed.\r\n");
+
+
     kernel_halt();
 }
