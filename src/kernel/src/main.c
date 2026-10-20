@@ -91,5 +91,29 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
 
     (void)serial_write("[kernel] memmove checks passed.\r\n");
 
+    const unsigned char a[] = {0x00, 0x80, 0x00};
+    const unsigned char b[] = {0x00, 0x7F, 0xFF};
+    const unsigned char equal[] = {0x00, 0x80, 0x00};
+
+    if (memcmp(a, equal, sizeof(a)) != 0)
+        PANIC("memcmp equality check failed");
+
+    if (memcmp(a, b, sizeof(a)) <= 0)
+        PANIC("memcmp greater-than check failed");
+
+    if (memcmp(b, a, sizeof(a)) >= 0)
+        PANIC("memcmp less-than check failed");
+
+    if (memcmp(a, b, 1) != 0)
+        PANIC("memcmp prefix check failed");
+
+    if (memcmp(a, b, 0) != 0)
+        PANIC("memcmp zero-length check failed");
+
+    if (memcmp(a, a, sizeof(a)) != 0)
+        PANIC("memcmp self-comparison failed");
+
+    (void)serial_write("[kernel] memcmp checks passed.\r\n");
+
     kernel_halt();
 }
