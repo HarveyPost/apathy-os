@@ -2,6 +2,7 @@
 #include "serial.h"
 #include "panic.h"
 #include "memory.h"
+#include "gdt.h"
 #include <stddef.h>
 
 static _Noreturn void kernel_halt(void) {
@@ -24,6 +25,9 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
     }
 
     (void)serial_write("[kernel] Boot information format valid.\r\n");
+
+    gdt_init();
+    (void)serial_write("[kernel] GDT installed.\r\n");
 
     unsigned char buffer[8];
 
