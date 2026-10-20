@@ -1,6 +1,6 @@
 CC := x86_64-elf-gcc
 
-OBJS := src/main.o src/serial.o src/panic.o
+OBJS := src/main.o src/serial.o src/panic.o src/memory.o
 
 CFLAGS := -I../shared -std=c11 -O2 -g -Wall -Wextra \
           -ffreestanding -mno-red-zone -mgeneral-regs-only \
@@ -15,10 +15,11 @@ LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
 
 all: kernel.elf
 
-src/main.o: ../shared/bootinfo.h src/serial.h
+src/main.o: ../shared/bootinfo.h src/serial.h src/panic.h src/memory.h
 src/serial.o: src/serial.h src/io.h
 src/panic.o: src/panic.h src/serial.h
-src/main.o: ../shared/bootinfo.h src/serial.h src/panic.h
+src/memory.o: src/memory.h
+src/memory.o: CFLAGS += -fno-tree-loop-distribute-patterns
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
