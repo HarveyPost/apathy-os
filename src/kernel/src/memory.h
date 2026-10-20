@@ -9,4 +9,7 @@ void *memset(void *destination, int value, size_t count);
 /* Copy count bytes between non-overlapping regions. */
 void *memcpy(void *destination, const void *source, size_t count);
 
+/* Copy count bytes; source and destination may overlap. */
+void *memmove(void *destination, const void *source, size_t count);
+
 #endif

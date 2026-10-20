@@ -67,6 +67,29 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
 
     (void)serial_write("[kernel] memcpy checks passed.\r\n");
 
+    char right[] = "ABCDE";
+    char left[] = "ABCDE";
+    const char expected_right[] = "AABCD";
+    const char expected_left[] = "BCDEE";
+    
+    if (memmove(right + 1, right, 4) != right + 1)
+        PANIC("memmove returned the wrong pointer");
+
+    if (memmove(left, left + 1, 4) != left)
+        PANIC("memmove returned the wrong pointer");
+
+    if (memmove(right, left, 0) != right)
+        PANIC("memmove zero-length return failed");
+
+    if (memmove(left, left, sizeof(left)) != left)
+        PANIC("memmove self-copy return failed");
+
+    for (size_t i = 0; i < sizeof(right); i++) {
+        if (right[i] != expected_right[i] || left[i] != expected_left[i])
+            PANIC("memmove overlap checks failed");
+    }
+
+    (void)serial_write("[kernel] memmove checks passed.\r\n");
 
     kernel_halt();
 }
