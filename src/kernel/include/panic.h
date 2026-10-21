@@ -1,5 +1,5 @@
-#ifndef JAZZ_PANIC_H
-#define JAZZ_PANIC_H
+#ifndef APATHY_PANIC_H
+#define APATHY_PANIC_H
 
 #include <stdint.h>
 

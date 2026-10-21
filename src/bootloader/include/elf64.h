@@ -1,5 +1,5 @@
-#ifndef JAZZ_ELF64_H
-#define JAZZ_ELF64_H
+#ifndef APATHY_ELF64_H
+#define APATHY_ELF64_H
 
 #include <efi.h>
 

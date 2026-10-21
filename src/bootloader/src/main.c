@@ -39,7 +39,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     serial_status = bootserial_open(SystemTable, &serial);
     if (!EFI_ERROR(serial_status))
         serial_status = bootserial_write(
-            serial, "[boot] Jazz bootloader started.\n");
+            serial, "[boot] Apathy bootloader started.\n");
 
     if (EFI_ERROR(serial_status))
         Print(L"Serial logging unavailable: %r\n", serial_status);

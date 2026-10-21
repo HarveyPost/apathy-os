@@ -1,5 +1,5 @@
-#ifndef JAZZ_MEMORY_H
-#define JAZZ_MEMORY_H
+#ifndef APATHY_MEMORY_H
+#define APATHY_MEMORY_H
 
 #include <stddef.h>
 

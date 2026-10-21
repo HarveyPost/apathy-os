@@ -1,5 +1,5 @@
-#ifndef JAZZ_BOOTSTACK_H
-#define JAZZ_BOOTSTACK_H
+#ifndef APATHY_BOOTSTACK_H
+#define APATHY_BOOTSTACK_H
 
 #include <efi.h>
 

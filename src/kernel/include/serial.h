@@ -1,5 +1,5 @@
-#ifndef JAZZ_SERIAL_H
-#define JAZZ_SERIAL_H
+#ifndef APATHY_SERIAL_H
+#define APATHY_SERIAL_H
 
 #include <stdbool.h>
 #include <stdint.h>

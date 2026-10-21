@@ -1,5 +1,5 @@
-#ifndef JAZZ_KERNELLOAD_H
-#define JAZZ_KERNELLOAD_H
+#ifndef APATHY_KERNELLOAD_H
+#define APATHY_KERNELLOAD_H
 
 #include <efi.h>
 

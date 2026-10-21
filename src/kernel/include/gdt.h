@@ -1,5 +1,5 @@
-#ifndef JAZZ_GDT_H
-#define JAZZ_GDT_H
+#ifndef APATHY_GDT_H
+#define APATHY_GDT_H
 
 #define GDT_KERNEL_CODE_SELECTOR 0x08
 

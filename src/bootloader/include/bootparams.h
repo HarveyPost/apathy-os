@@ -1,5 +1,5 @@
-#ifndef JAZZ_BOOTPARAMS_H
-#define JAZZ_BOOTPARAMS_H
+#ifndef APATHY_BOOTPARAMS_H
+#define APATHY_BOOTPARAMS_H
 
 #include <efi.h>
 #include "bootinfo.h"

@@ -1,5 +1,5 @@
-#ifndef JAZZ_IO_H
-#define JAZZ_IO_H
+#ifndef APATHY_IO_H
+#define APATHY_IO_H
 
 #include <stdint.h>
 

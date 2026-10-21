@@ -1,5 +1,5 @@
-#ifndef JAZZ_BOOTEXIT_H
-#define JAZZ_BOOTEXIT_H
+#ifndef APATHY_BOOTEXIT_H
+#define APATHY_BOOTEXIT_H
 
 #include "bootmem.h"
 #include "bootinfo.h"

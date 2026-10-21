@@ -16,7 +16,7 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
     if (!serial_init())
         kernel_halt();
 
-    if (!serial_write("[kernel] Jazz kernel entered.\r\n"))
+    if (!serial_write("[kernel] Apathy kernel entered.\r\n"))
         kernel_halt();
 
     if (boot_info == NULL ||

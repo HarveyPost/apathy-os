@@ -1,5 +1,5 @@
-#ifndef JAZZ_BOOTSERIAL_H
-#define JAZZ_BOOTSERIAL_H
+#ifndef APATHY_BOOTSERIAL_H
+#define APATHY_BOOTSERIAL_H
 
 #include <efi.h>
 

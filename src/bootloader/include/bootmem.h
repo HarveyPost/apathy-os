@@ -1,5 +1,5 @@
-#ifndef JAZZ_BOOTMEM_H
-#define JAZZ_BOOTMEM_H
+#ifndef APATHY_BOOTMEM_H
+#define APATHY_BOOTMEM_H
 
 #include <efi.h>
 

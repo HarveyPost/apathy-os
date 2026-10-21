@@ -1,5 +1,5 @@
-#ifndef JAZZ_BOOTJUMP_H
-#define JAZZ_BOOTJUMP_H
+#ifndef APATHY_BOOTJUMP_H
+#define APATHY_BOOTJUMP_H
 
 #include "bootinfo.h"
 

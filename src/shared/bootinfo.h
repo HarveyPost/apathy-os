@@ -1,5 +1,5 @@
-#ifndef JAZZ_BOOTINFO_H
-#define JAZZ_BOOTINFO_H
+#ifndef APATHY_BOOTINFO_H
+#define APATHY_BOOTINFO_H
 
 #include <stdint.h>
 
