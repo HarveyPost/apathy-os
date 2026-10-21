@@ -2,6 +2,7 @@
 #include "gdt.h"
 #include "panic.h"
 #include "serial.h"
+#include "tss.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -74,11 +75,29 @@ static __attribute__((interrupt)) void breakpoint_handler(
     exception_panic("Breakpoint exception", frame, false, 0);
 }
 
-static void idt_set_gate(unsigned vector, uintptr_t address) {
+static __attribute__((interrupt)) void double_fault_handler(
+    INTERRUPT_FRAME *frame, uint64_t error_code
+) {
+    exception_panic("Double fault", frame, true, error_code);
+}
+
+static __attribute__((interrupt)) void nmi_handler(
+    INTERRUPT_FRAME *frame
+) {
+    exception_panic("Non-maskable interrupt", frame, false, 0);
+}
+
+static __attribute__((interrupt)) void machine_check_handler(
+    INTERRUPT_FRAME *frame
+) {
+    exception_panic("Machine check", frame, false, 0);
+}
+
+static void idt_set_gate(unsigned vector, uintptr_t address, uint8_t ist) {
     idt[vector] = (IDT_ENTRY) {
         .offset_low = (uint16_t)address,
         .selector = GDT_KERNEL_CODE_SELECTOR,
-        .ist = 0,
+        .ist = ist,
         .attributes = 0x8E, /* creates a present, ring-0 interrupt gate. */
         .offset_middle = (uint16_t)(address >> 16),
         .offset_high = (uint32_t)(address >> 32),
@@ -88,7 +107,7 @@ static void idt_set_gate(unsigned vector, uintptr_t address) {
 
 void idt_init(void) {
     for (unsigned vector = 0; vector < 256; vector++) {
-        idt_set_gate(vector, (uintptr_t)unhandled_interrupt);
+        idt_set_gate(vector, (uintptr_t)unhandled_interrupt, 0);
     }
 
     const uint8_t error_vectors[] = {
@@ -96,10 +115,14 @@ void idt_init(void) {
     };
 
     for (size_t i = 0; i < sizeof(error_vectors) / sizeof(error_vectors[0]); i ++) {
-        idt_set_gate(error_vectors[i], (uintptr_t)unhandled_error);
+        idt_set_gate(error_vectors[i], (uintptr_t)unhandled_error, 0);
     }
 
-    idt_set_gate(3, (uintptr_t)breakpoint_handler);
+    idt_set_gate(3, (uintptr_t)breakpoint_handler, 0);
+
+    idt_set_gate(8, (uintptr_t)double_fault_handler, TSS_IST_DOUBLE_FAULT);
+    idt_set_gate(2, (uintptr_t)nmi_handler, TSS_IST_NMI);
+    idt_set_gate(18, (uintptr_t)machine_check_handler, TSS_IST_MACHINE_CHECK);
 
     const IDT_POINTER pointer = {
         .limit = sizeof(idt) - 1,

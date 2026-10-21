@@ -19,7 +19,7 @@
 - [x] Add kernel-owned serial output and run through the host terminal.
 - [x] Add kernel panic diagnostics and a QEMU/GDB debug target.
 - [x] Implement the freestanding memory routines required by the kernel compiler.
-- [ ] Install descriptor tables, exception handlers, and dedicated exception stacks.
+- [x] Install descriptor tables, exception handlers, and dedicated exception stacks.
 - [ ] Implement physical-page allocation and reserve memory still in use.
 - [ ] Manage kernel page tables, mapping permissions, and page faults.
 - [ ] Add a kernel heap and safely reclaim unused bootloader memory.

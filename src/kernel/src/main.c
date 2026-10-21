@@ -31,7 +31,7 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
     (void)serial_write("[kernel] GDT and TSS installed.\r\n");
 
     idt_init();
-    (void)serial_write("[kernel] IDT installed.\r\n");
+    (void)serial_write("[kernel] IDT and exception stacks installed.\r\n");
 
     unsigned char buffer[8];
 
@@ -122,6 +122,8 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
         PANIC("memcmp self-comparison failed");
 
     (void)serial_write("[kernel] memcmp checks passed.\r\n");
+
+    //__asm__ volatile("int3");
 
     kernel_halt();
 }

@@ -20,7 +20,7 @@ src/serial.o: include/serial.h include/io.h
 src/panic.o: include/panic.h include/serial.h
 src/memory.o: include/memory.h
 src/gdt.o: include/gdt.h include/tss.h
-src/idt.o: include/idt.h include/gdt.h include/panic.h include/serial.h
+src/idt.o: include/idt.h include/gdt.h include/panic.h include/serial.h include/tss.h
 src/tss.o: include/tss.h
 src/memory.o: CFLAGS += -fno-tree-loop-distribute-patterns
 

@@ -3,6 +3,13 @@
 
 #include <stdint.h>
 
+/* Certain failures while the CPU is trying to deliver another exception. */
+#define TSS_IST_DOUBLE_FAULT 1
+/* An interrupt that ordinary cli interrupt masking does not block. */
+#define TSS_IST_NMI 2
+/* A processor-related hardware error. */
+#define TSS_IST_MACHINE_CHECK 3
+
 /* Layout comes from x86-64 architecture. */
 typedef struct __attribute__((packed)) {
     uint32_t reserved0;
