@@ -21,13 +21,21 @@ static uint64_t gdt[] __attribute__((aligned(16))) = {
 
 static __attribute__((naked)) void gdt_load(const GDT_POINTER *pointer) {
     __asm__(
-        /* lgdt loads the new table's address and limit. */
+        /* lgdt loads the new table's address and limit into GDTR.
+         * It doesn't copy the entire table.
+         * RDI contains the pointer argument. */
         "lgdt (%rdi)\n\t"
 
+        /* This constructs a far-return destination on the stack:
+         * Code selector: 0x08.
+         * Instruction address: the upcoming label 1:. 
+         *
+         * leaq calculates that label's address.
+         * lretq then transfers execution there while reloading CS, the code-segment register.
+         * This is necessary as loading GDTR alone doesn't refresh the current code segment. */
         "pushq $0x08\n\t"
         "leaq 1f(%rip), %rax\n\t"
         "pushq %rax\n\t"
-        /* lretq transfers execution to label 1 using code selector 0x08, reloading CS. */
         "lretq\n\t"
 
         "1:\n\t"
@@ -43,6 +51,8 @@ static __attribute__((naked)) void gdt_load(const GDT_POINTER *pointer) {
 
 void gdt_init(void) {
         const GDT_POINTER pointer = {
+            /* The table occupies 24 bytes, so its limit is 23:
+            * the offset of its last byte. */
             .limit = sizeof(gdt) - 1,
             .base = (uint64_t)(uintptr_t)gdt,
         };
