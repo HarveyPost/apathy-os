@@ -28,7 +28,7 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
     (void)serial_write("[kernel] Boot information format valid.\r\n");
 
     gdt_init();
-    (void)serial_write("[kernel] GDT installed.\r\n");
+    (void)serial_write("[kernel] GDT and TSS installed.\r\n");
 
     idt_init();
     (void)serial_write("[kernel] IDT installed.\r\n");

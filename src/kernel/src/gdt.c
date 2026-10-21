@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "tss.h"
 #include <stdint.h>
 
 /* Must occupy exactly ten bytes:
@@ -17,6 +18,8 @@ static uint64_t gdt[] __attribute__((aligned(16))) = {
     0x0000000000000000, /* Null descriptor. */
     0x00AF9B000000FFFF, /* 0x08: ring 0, readable 64-bit code. */
     0x00CF93000000FFFF, /* 0x10: ring 0, writeable data. */
+    0,                  /* 0x18: TSS descriptor, low half. */
+    0,                  /*       TSS descriptor, high half. */
 };
 
 static __attribute__((naked)) void gdt_load(const GDT_POINTER *pointer) {
@@ -49,13 +52,35 @@ static __attribute__((naked)) void gdt_load(const GDT_POINTER *pointer) {
     );
 }
 
-void gdt_init(void) {
-        const GDT_POINTER pointer = {
-            /* The table occupies 24 bytes, so its limit is 23:
-            * the offset of its last byte. */
-            .limit = sizeof(gdt) - 1,
-            .base = (uint64_t)(uintptr_t)gdt,
-        };
+static void gdt_set_tss(const TSS *tss) {
+    uint64_t base = (uint64_t)(uintptr_t)tss;
+    uint64_t limit = sizeof(*tss) - 1;
 
-        gdt_load(&pointer);
-    }
+    gdt[3] = (limit & 0xFFFF)
+           | ((base & 0xFFFFFF) << 16)
+           | (UINT64_C(0x89) << 40)
+           | (((limit >> 16) & 0xF) << 48)
+           | (((base >> 24) & 0xFF) << 56);
+
+    gdt[4] = base >> 32;
+}
+
+void gdt_init(void) {
+    const TSS *tss = tss_init();
+        gdt_set_tss(tss);
+
+    const GDT_POINTER pointer = {
+        /* The table occupies 40 bytes, so its limit is 39:
+        * the offset of its last byte. */
+        .limit = sizeof(gdt) - 1,
+        .base = (uint64_t)(uintptr_t)gdt,
+    };
+
+    gdt_load(&pointer);
+
+    uint16_t selector = GDT_TSS_SELECTOR;
+    /* ltr means load task register, telling the CPU which TSS descriptor to use.
+    * The GDT stays writable because loading the task register sets the descriptor's busy bit. */
+    __asm__ volatile("ltr %0" : : "r"(selector) : "memory");
+}
+
