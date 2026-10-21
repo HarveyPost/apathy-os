@@ -15,7 +15,7 @@ LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
 
 all: kernel.elf
 
-src/main.o: ../shared/bootinfo.h include/serial.h include/panic.h include/memory.h include/gdt.h
+src/main.o: ../shared/bootinfo.h include/serial.h include/panic.h include/memory.h include/gdt.h include/idt.h
 src/serial.o: include/serial.h include/io.h
 src/panic.o: include/panic.h include/serial.h
 src/memory.o: include/memory.h

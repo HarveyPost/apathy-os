@@ -5,13 +5,13 @@
 #include <stdint.h>
 
 typedef struct __attribute__((packed)) {
-    uint16_t offset_low;
-    uint16_t selector;
-    uint8_t ist;
-    uint8_t attributes;
-    uint16_t offset_middle;
-    uint32_t offset_high;
-    uint32_t reserved;
+    uint16_t offset_low; /* offset bits 0..15 */
+    uint16_t selector; /* a code segment selector in GDT or LDT */
+    uint8_t ist; /* bits 0..2 holds Interrupt Stack Table offset, rest of bits zero */
+    uint8_t attributes; /* gate type, descriptor privilege level (DPL), and present (P) fields */
+    uint16_t offset_middle; /* offset bits 16..31 */
+    uint32_t offset_high; /* offset bits 32..63 */
+    uint32_t reserved; /* Must be zero */
 } IDT_ENTRY;
 
 typedef struct __attribute__((packed)) {
@@ -20,11 +20,11 @@ typedef struct __attribute__((packed)) {
 } IDT_POINTER;
 
 typedef struct {
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
+    uint64_t rip; /* saved instruction pointer */
+    uint64_t cs; /* code selector */
+    uint64_t rflags; /* flags */
+    uint64_t rsp; /* stack pointer */
+    uint64_t ss; /* stack selector */
 } INTERRUPT_FRAME;
 
 _Static_assert(sizeof(IDT_ENTRY) == 16, "Unexpected IDT entry layout");
@@ -59,7 +59,7 @@ static void idt_set_gate(unsigned vector, uintptr_t address) {
         .offset_low = (uint16_t)address,
         .selector = GDT_KERNEL_CODE_SELECTOR,
         .ist = 0,
-        .attributes = 0x8E,
+        .attributes = 0x8E, /* creates a present, ring-0 interrupt gate. */
         .offset_middle = (uint16_t)(address >> 16),
         .offset_high = (uint32_t)(address >> 32),
         .reserved = 0,
@@ -86,5 +86,6 @@ void idt_init(void) {
         .base = (uint64_t)(uintptr_t)idt,
     };
 
+    /* lidt installs these values into IDTR, making this table active. */
     __asm__ volatile("lidt %0" : : "m"(pointer) : "memory");
 }
