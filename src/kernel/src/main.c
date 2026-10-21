@@ -2,8 +2,8 @@
 #include "serial.h"
 #include "panic.h"
 #include "memory.h"
-#include "gdt.h"
-#include "idt.h"
+#include "arch/gdt.h"
+#include "arch/idt.h"
 #include <stddef.h>
 
 static _Noreturn void kernel_halt(void) {

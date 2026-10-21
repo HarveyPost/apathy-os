@@ -1,4 +1,4 @@
-#include "tss.h"
+#include "arch/tss.h"
 #include <stddef.h>
 
 _Static_assert(sizeof(TSS) == 104, "Unexpected TSS size");

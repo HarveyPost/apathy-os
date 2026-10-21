@@ -1,13 +1,18 @@
 CC := x86_64-elf-gcc
 
-OBJS := src/main.o src/serial.o src/panic.o src/memory.o src/gdt.o src/idt.o src/tss.o
+ARCH_DIR := arch/x86_64
+LINKER_SCRIPT := $(ARCH_DIR)/linker.ld
 
-CFLAGS := -Iinclude -I../shared -std=c11 -O2 -g -Wall -Wextra \
+OBJS := src/main.o src/serial.o src/panic.o src/memory.o $(ARCH_DIR)/src/gdt.o $(ARCH_DIR)/src/idt.o $(ARCH_DIR)/src/tss.o
+DEPS := $(OBJS:.o=.d)
+
+CFLAGS := -Iinclude -I$(ARCH_DIR)/include -I../shared \
+		  -std=c11 -O2 -g -Wall -Wextra \
           -ffreestanding -mno-red-zone -mgeneral-regs-only \
           -fno-pie -fno-stack-protector \
           -fno-asynchronous-unwind-tables -fno-unwind-tables
 
-LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
+LDFLAGS := -nostdlib -static -no-pie -Wl,-T,$(LINKER_SCRIPT) \
            -Wl,--build-id=none -Wl,-z,max-page-size=0x1000
 
 .PHONY: all clean
@@ -15,20 +20,15 @@ LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
 
 all: kernel.elf
 
-src/main.o: ../shared/bootinfo.h include/serial.h include/panic.h include/memory.h include/gdt.h include/idt.h
-src/serial.o: include/serial.h include/io.h
-src/panic.o: include/panic.h include/serial.h
-src/memory.o: include/memory.h
-src/gdt.o: include/gdt.h include/tss.h
-src/idt.o: include/idt.h include/gdt.h include/panic.h include/serial.h include/tss.h
-src/tss.o: include/tss.h
 src/memory.o: CFLAGS += -fno-tree-loop-distribute-patterns
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-kernel.elf: $(OBJS) linker.ld
+kernel.elf: $(OBJS) $(LINKER_SCRIPT)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ -lgcc
 
+-include $(DEPS)
+
 clean:
-	rm -f $(OBJS) kernel.elf
+	rm -f $(OBJS) $(DEPS) kernel.elf

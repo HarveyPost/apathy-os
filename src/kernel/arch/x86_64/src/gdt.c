@@ -1,5 +1,5 @@
-#include "gdt.h"
-#include "tss.h"
+#include "arch/gdt.h"
+#include "arch/tss.h"
 #include <stdint.h>
 
 /* Must occupy exactly ten bytes:

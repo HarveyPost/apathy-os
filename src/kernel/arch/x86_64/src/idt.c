@@ -1,8 +1,8 @@
-#include "idt.h"
-#include "gdt.h"
+#include "arch/idt.h"
+#include "arch/gdt.h"
 #include "panic.h"
 #include "serial.h"
-#include "tss.h"
+#include "arch/tss.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
