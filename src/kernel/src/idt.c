@@ -1,8 +1,10 @@
 #include "idt.h"
 #include "gdt.h"
 #include "panic.h"
+#include "serial.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct __attribute__((packed)) {
     uint16_t offset_low; /* offset bits 0..15 */
@@ -32,26 +34,44 @@ _Static_assert(sizeof(IDT_POINTER) == 10, "Unexpected IDTR layout");
 
 static IDT_ENTRY idt[256] __attribute__((aligned(16)));
 
+static _Noreturn void exception_panic(
+    const char *message,
+    const INTERRUPT_FRAME *frame,
+    bool has_error_code,
+    uint64_t error_code
+) {
+    /* rip is the saved instruction address. */
+    (void)serial_write("\r\n[exception] RIP: ");
+    (void)serial_write_hex64(frame->rip);
+    /* rsp is the saved stack pointer. */
+    (void)serial_write("\r\n[exception] RSP: ");
+    (void)serial_write_hex64(frame->rsp);
+
+    if (has_error_code) {
+        (void)serial_write("\r\n[exception] Error code: ");
+        (void)serial_write_hex64(error_code);
+    }
+
+    (void)serial_write("\r\n");
+    PANIC(message);
+}
+
 static __attribute__((interrupt)) void unhandled_interrupt(
     INTERRUPT_FRAME *frame
 ) {
-    (void)frame;
-    PANIC("Unhandled interrupt or exception");
+    exception_panic("Unhandled interrupt or exception", frame, false, 0);
 }
 
 static __attribute__((interrupt)) void unhandled_error(
     INTERRUPT_FRAME *frame, uint64_t error_code
 ) {
-    (void)frame;
-    (void)error_code;
-    PANIC("CPU exception with an error code");
+    exception_panic("CPU exception with an error code", frame, true, error_code);
 }
 
 static __attribute__((interrupt)) void breakpoint_handler(
     INTERRUPT_FRAME *frame
 ) {
-    (void)frame;
-    PANIC("Breakpoint exception");
+    exception_panic("Breakpoint exception", frame, false, 0);
 }
 
 static void idt_set_gate(unsigned vector, uintptr_t address) {

@@ -84,3 +84,19 @@ bool serial_write(const char *text) {
 
     return true;
 }
+
+bool serial_write_hex64(uint64_t value) {
+    static const char digits[] = "0123456789abcdef";
+    char buffer[19]; /* Prefix, sixteen digits, terminating NUL. */
+
+    buffer[0] = '0';
+    buffer[1] = 'x';
+
+    for (unsigned i = 0; i < 16; i++) {
+        unsigned shift = 60 - i * 4;
+        buffer[i + 2] = digits[(value >> shift) & 0xF];
+    }
+
+    buffer[18] = '\0';
+    return serial_write(buffer);
+}
