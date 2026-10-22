@@ -3,7 +3,8 @@ CC := x86_64-elf-gcc
 ARCH_DIR := arch/x86_64
 LINKER_SCRIPT := $(ARCH_DIR)/linker.ld
 
-OBJS := src/main.o src/serial.o src/panic.o src/memory.o $(ARCH_DIR)/src/gdt.o $(ARCH_DIR)/src/idt.o $(ARCH_DIR)/src/tss.o
+OBJS := src/main.o src/serial.o src/panic.o src/memory.o src/memmap.o \
+		$(ARCH_DIR)/src/gdt.o $(ARCH_DIR)/src/idt.o $(ARCH_DIR)/src/tss.o
 DEPS := $(OBJS:.o=.d)
 
 CFLAGS := -Iinclude -I$(ARCH_DIR)/include -I../shared \

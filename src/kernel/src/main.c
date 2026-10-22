@@ -2,6 +2,7 @@
 #include "serial.h"
 #include "panic.h"
 #include "memory.h"
+#include "memmap.h"
 #include "arch/gdt.h"
 #include "arch/idt.h"
 #include <stddef.h>
@@ -122,6 +123,15 @@ _Noreturn void KERNEL_ABI kernel_main(const BOOT_INFO *boot_info) {
         PANIC("memcmp self-comparison failed");
 
     (void)serial_write("[kernel] memcmp checks passed.\r\n");
+
+    uint64_t conventional_pages;
+
+    if (!memmap_count_conventional_pages(boot_info, &conventional_pages))
+        PANIC("Invalid firmware memory map");
+
+    (void)serial_write("[kernel] Conventional RAM pages: ");
+    (void)serial_write_hex64(conventional_pages);
+    (void)serial_write("\r\n");
 
     //__asm__ volatile("int3");
 
